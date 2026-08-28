@@ -1,0 +1,84 @@
+name: Approve blessing
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    if: |
+      contains(github.event.issue.title, '[blessing-approval]') ||
+      contains(github.event.issue.body, '<!-- blessing-approval -->')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse and commit blessing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body ?? '';
+
+            const block = body.match(/<!-- blessing-approval -->([\s\S]*?)<!-- \/blessing-approval -->/);
+            if (!block) {
+              core.setFailed('Missing blessing-approval block.');
+              return;
+            }
+
+            const text = block[1];
+            const pick = (label) => {
+              const m = text.match(new RegExp('\\*\\*' + label + ':\\*\\*\\s*(.+)'));
+              return m ? m[1].trim().replace(/\r/g, '').replace(/@.*$/, '').replace(/\s+$/, '') : '';
+            };
+
+            const name = pick('Name');
+            const message = pick('Message');
+            const dateRaw = pick('Date');
+            const date = dateRaw && /^\d{4}-\d{2}-\d{2}$/.test(dateRaw)
+              ? dateRaw
+              : new Date().toISOString().slice(0, 10);
+
+            if (!name || !message) {
+              core.setFailed('Name and Message are required.');
+              return;
+            }
+
+            const safeName = name.replace(/\|/g, '/').slice(0, 40);
+            const safeMsg = message.replace(/\|/g, '/').replace(/\r?\n/g, ' ').slice(0, 280);
+
+            const fs = require('fs');
+            const path = 'data/blessings.env';
+            const current = fs.readFileSync(path, 'utf8');
+
+            const usedIds = [...current.matchAll(/^(\d{2,})\|/gm)].map(m => parseInt(m[1], 10));
+            const nextId = usedIds.length === 0 ? 1 : Math.max(...usedIds) + 1;
+            const num = String(nextId).padStart(2, '0');
+
+            const line = `\n${num}|${date}|${safeName}|${safeMsg}\n`;
+            const updated = current.endsWith('\n') ? current + line.slice(1) : current + line;
+
+            fs.writeFileSync(path, updated, 'utf8');
+
+            const { execFileSync } = require('child_process');
+            execFileSync('git', ['config', 'user.name', 'github-actions[bot]']);
+            execFileSync('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+            execFileSync('git', ['add', 'data/blessings.env']);
+            execFileSync('git', ['commit', '-m', `blessings: add ${num} from ${safeName}`]);
+            execFileSync('git', ['push', 'origin', 'main']);
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.issue.number,
+              body: `✅ 已發佈 — 祝福編號 \`${num}\` 已加入 \`data/blessings.env\` 並部署。\n\n新祝福會在 GitHub Pages 重建後（大約 30 秒）出現於 \`/comment/\`。`,
+            });
+            await github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.payload.issue.number,
+              state: 'closed',
+              state_reason: 'completed',
+            });

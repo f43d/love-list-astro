@@ -1,0 +1,32 @@
+---
+import { loadBlessingsNewestFirst } from '../lib/parseBlessings';
+
+const items = loadBlessingsNewestFirst();
+
+const fmt = new Intl.DateTimeFormat('zh-Hant', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : fmt.format(d);
+}
+---
+<section class="blessings" aria-label="Blessings wall">
+  {items.length === 0 && (
+    <p class="blessings__empty">成為第一位留下祝福的人 💌</p>
+  )}
+  <ol class="blessings__list">
+    {items.map((b) => (
+      <li class="blessing" id={`blessing-${b.num}`}>
+        <p class="blessing__message">"{b.message}"</p>
+        <p class="blessing__meta">
+          <span class="blessing__name">— {b.name}</span>
+          <span class="blessing__date">{formatDate(b.date)}</span>
+        </p>
+      </li>
+    ))}
+  </ol>
+</section>

@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          PUBLIC_ARTALK_SERVER: ${{ vars.ARTALK_SERVER }}
+          PUBLIC_WEB3FORMS_KEY: ${{ vars.PUBLIC_WEB3FORMS_KEY }}
 
       - uses: actions/configure-pages@v5
 

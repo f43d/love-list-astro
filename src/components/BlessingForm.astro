@@ -1,0 +1,112 @@
+---
+const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
+const configured = accessKey.length > 0;
+const subject = 'New blessing for buc.ketli.st';
+---
+{!configured && (
+  <p class="blessing-form__warning">
+    表單尚未啟用 — 請先設定 <code>PUBLIC_WEB3FORMS_KEY</code>（見 README）。
+  </p>
+)}
+
+<form
+  class={`blessing-form${configured ? '' : ' is-disabled'}`}
+  action="https://api.web3forms.com/submit"
+  method="POST"
+  aria-label="Leave a blessing"
+  data-subject={subject}
+>
+  <input type="hidden" name="access_key" value={accessKey} />
+  <input type="hidden" name="subject" value={subject} />
+  <input type="hidden" name="from_name" value="buc.ketli.st blessings" />
+  <input
+    type="checkbox"
+    name="botcheck"
+    class="blessing-form__honeypot"
+    tabindex="-1"
+    autocomplete="off"
+    aria-hidden="true"
+  />
+
+  <p class="blessing-form__intro">
+    留下一句話、一段祝福。批准後便會出現在祝福牆上 ❤️
+  </p>
+
+  <label class="blessing-form__field">
+    <span class="blessing-form__label">你的名字</span>
+    <input
+      type="text"
+      name="name"
+      required
+      maxlength="40"
+      autocomplete="name"
+      placeholder="例如：小明"
+      disabled={!configured}
+    />
+  </label>
+
+  <label class="blessing-form__field">
+    <span class="blessing-form__label">電郵（不公開）</span>
+    <input
+      type="email"
+      name="email"
+      required
+      autocomplete="email"
+      placeholder="your@email.com"
+      disabled={!configured}
+    />
+  </label>
+
+  <label class="blessing-form__field">
+    <span class="blessing-form__label">祝福</span>
+    <textarea
+      name="message"
+      required
+      maxlength="280"
+      rows="4"
+      placeholder="祝你們..."
+      disabled={!configured}
+    ></textarea>
+  </label>
+
+  <button type="submit" class="blessing-form__submit" disabled={!configured}>
+    送出祝福
+  </button>
+
+  <p class="blessing-form__status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('.blessing-form');
+  const status = form?.querySelector<HTMLParagraphElement>('.blessing-form__status');
+  const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form || !status || !submit) return;
+
+    submit.disabled = true;
+    status.textContent = '傳送中...';
+
+    const data = new FormData(form);
+
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: data,
+      });
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        status.textContent = '已收到！待批准後便會公開。多謝你 💌';
+        form.reset();
+      } else {
+        status.textContent = '送出失敗，請稍後再試。';
+      }
+    } catch {
+      status.textContent = '網絡錯誤，請稍後再試。';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>

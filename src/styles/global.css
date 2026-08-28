@@ -243,6 +243,164 @@ body {
 @media (max-width: 768px) { .content-text { font-size: 1.1rem; line-height: 1.6; } }
 @media (max-width: 480px) { .content-text { font-size: 1rem; } }
 
+.page__subtitle {
+  font-family: var(--font-display);
+  color: var(--color-text);
+  text-align: center;
+  font-size: 1.4em;
+  margin: 3rem 0 1.5rem;
+}
+
+/* === Blessings form === */
+.blessing-form {
+  max-width: 560px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.blessing-form__intro {
+  margin: 0 0 1rem;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.blessing-form__honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.blessing-form__field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.blessing-form__label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.9em;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.blessing-form__field input,
+.blessing-form__field textarea {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(47, 80, 97, 0.3);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.blessing-form__field input:focus,
+.blessing-form__field textarea:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.blessing-form__submit {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: white;
+  background: var(--color-text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.blessing-form__submit:hover { background: var(--color-text-hover); }
+.blessing-form__submit:disabled { opacity: 0.6; cursor: wait; }
+
+.blessing-form__status {
+  min-height: 1.5em;
+  margin: 0.75rem 0 0;
+  text-align: center;
+  color: var(--color-text);
+  font-size: 0.95em;
+}
+
+.blessing-form__warning {
+  max-width: 560px;
+  margin: 0 auto 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(229, 127, 132, 0.15);
+  border: 1px solid var(--color-text-hover);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.blessing-form__warning code {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 0 0.3em;
+  border-radius: 4px;
+}
+
+.blessing-form.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* === Blessings wall === */
+.blessings { margin: 2rem 0; }
+
+.blessings__empty {
+  text-align: center;
+  color: var(--color-text);
+  font-style: italic;
+}
+
+.blessings__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.blessing {
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.55);
+  border-left: 3px solid var(--color-text-hover);
+  border-radius: 8px;
+}
+
+.blessing__message {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  white-space: pre-wrap;
+}
+
+.blessing__meta {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: var(--color-text);
+  opacity: 0.8;
+}
+
+.blessing__name { font-weight: 600; }
+
 /* === Gallery === */
 .gallery {
   display: grid;
