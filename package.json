@@ -8,6 +8,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "end-of-day": "node scripts/end-of-day.mjs",
+    "end-of-day:md": "node scripts/end-of-day.mjs --markdown",
     "astro": "astro"
   },
   "dependencies": {

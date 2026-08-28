@@ -88,6 +88,42 @@ Edit `src/styles/global.css` `:root` block. The site has one source of truth —
 - No user-generated data lives in the database — content is committed to `data/*.env`.
 - Approved blessings live in git history; restoring is `git checkout data/blessings.env@<sha>`.
 
+## End-of-day routine
+
+When you (or your AI agent) say **"call it a day"**, follow this disciplined close-out so future-you and future-agents have full context.
+
+### What the AI does
+
+1. Run `npm run end-of-day --silent` — outputs a JSON snapshot:
+   ```json
+   { "today": "...", "commits": [...], "filesChanged": [...], "suggestions": {...} }
+   ```
+   Or `npm run end-of-day:md` for a Markdown rendering.
+2. Draft **three** updates based on what's changed:
+   - `docs/sessions/<today>.md` (or append to the existing one for today) — a short log of what was done, why, open questions.
+   - `docs/DECISIONS.md` — append-only entry if any non-trivial decision was made. Format: **decision** + **context** + **alternatives rejected** + **consequence**.
+   - `CHANGELOG.md` — user-facing entry if anything visitors will see changed (pages, components, styles).
+3. Show the drafts in chat — **do not write them to disk yet**.
+4. Wait for the user to approve / edit / drop them.
+5. On approval: write the files, stage, commit (`docs(session): end-of-day <date>`), and ask for a token to push.
+
+### Heuristics the script uses
+
+- **Decisions to log** when files in `src/components/`, `.github/workflows/`, or top-level config (`package.json`, `astro.config.mjs`) change.
+- **CHANGELOG entry** when files in `src/pages/`, `src/components/`, or `src/styles/` change.
+- **Session log**: every working day always gets one — append if same day, new file if later.
+
+### What you (the user) do
+
+1. Read the drafts.
+2. Confirm, edit, or ask for changes. Be specific: "drop the CHANGELOG entry", "shorten the rationale in DECISIONS", etc.
+3. Say **"yes, push"** (or similar). Provide a fresh GitHub PAT when asked (the one used to push the day before won't be needed any longer — revoke it).
+
+### Discipline
+
+- If a session has **no real decision** (e.g. just typo fixes, dependency bumps), it's still worth a session log but skip `DECISIONS.md`.
+- If a session only touches internal plumbing (CI, types, no user-visible), it's still worth a session log but skip `CHANGELOG.md`.
+
 ## Sources / credentials checklist
 
 Owner should have access to:

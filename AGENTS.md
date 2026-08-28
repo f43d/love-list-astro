@@ -38,7 +38,22 @@ Deploy is automatic: push to `main` → `.github/workflows/deploy.yml` → GitHu
 - Commit messages: `<type>(<scope>): <summary>` (e.g. `gallery: replace lightbox`, `blessings: switch from Artalk to Web3Forms`).
 - AI-authored commits get `Co-authored-by: opencode <noreply@opencode>` in the trailer.
 - When making a non-trivial decision, append to `docs/DECISIONS.md`. State the decision, context, alternatives, and consequence.
-- When finishing a session of work, append a file `docs/sessions/YYYY-MM-DD-<slug>.md` summarising what changed.
+- When finishing a session of work, run `npm run end-of-day --silent` to gather git context, then draft the 3 doc updates per `docs/OPERATIONS.md` §"End-of-day routine".
+
+## End-of-day routine
+
+Triggered when the user says **"call it a day"** (or similar). The agent MUST:
+
+1. Run `npm run end-of-day --silent` and read the JSON to know what changed.
+2. Generate **draft text** for:
+   - `docs/sessions/<today>.md` (or append if today's file exists)
+   - `docs/DECISIONS.md` (only if a real decision was made — `suggestions.appendDecisions` is a hint, not a mandate)
+   - `CHANGELOG.md` (only if user-visible — `suggestions.updateChangelog` is a hint)
+3. Show drafts to the user as readable preview (no automatic edits yet).
+4. Wait for explicit confirmation. The user may edit the drafts.
+5. On confirmation: write the files, commit with a `docs(session): ...` message, push.
+
+Do **not** invent decisions that weren't discussed. If unsure, ask. Prefer to skip `DECISIONS.md` and `CHANGELOG.md` rather than guess.
 
 ## Things to never do
 
