@@ -64,11 +64,12 @@ Do **not** invent decisions that weren't discussed. If unsure, ask. Prefer to sk
 - Don't add analytics / trackers — the site is private.
 - Don't create issues on the user's behalf; the moderation flow expects the user to drive approvals.
 - Don't commit secrets (`PUBLIC_WEB3FORMS_KEY` lives in `.env` / GitHub Variables, not source).
+- **Don't ship a site without verifying `@font-face` declarations exist for every named font.** Token references (`font-family: 'DC-CST'`) are not enough — the browser needs `@font-face` to know where to download the font files. If only fallbacks are referenced, fonts silently render as system defaults and the bug is invisible until a non-Latin user visits. See DECISIONS.md entry 2026-08-28.
 
 ## Owners / context
 
 - Owner: `f43d` on GitHub.
-- Domain owner: managed via Cloudflare DNS for `ketli.st`. Four A records point `buc.ketli.st` at GitHub Pages IPs (`185.199.108.153–156`), all DNS-only.
+- Domain owner: managed via Cloudflare DNS for `ketli.st`. **Current DNS** (changed on 2026-08-28 morning): `buc.ketli.st` is a **CNAME → `f43d.github.io`** (grey cloud / DNS only). Earlier used four A records to GitHub IPs; both work but CNAME is the documented GitHub-preferred path for subdomains.
 - The previous Hugo repo `papermod-lovelist4` is left untouched — it stays as a historical reference.
 
 ## Where to look first

@@ -86,3 +86,15 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
 - **Rejected**: keep it as an unstated convention (re-discovery cost too high for future me / future agents); vendor it inside `love-list-astro` (couples unrelated projects).
 - **Consequence**: one-line `git clone https://github.com/f43d/project-scaffold.git my-thing` produces a complete scaffold with end-of-day routine baked in.
 - **Cost to revisit**: if the convention needs to fork (e.g. Python projects get a different parseX script), split into `project-scaffold-js` / `project-scaffold-py`.
+
+## 2026-08-28 — Lesson: verify @font-face when migrating a site, not just font-family tokens
+
+- **Context**: after migrating `love-list-astro` from Hugo, the deployed CSS had `font-family: 'DC-CST'` and `font-family: 'awkwardblack'` in design tokens but **zero `@font-face` declarations**. Result: every browser silently fell back to the system default for CJK. The site *looked* styled (colours, layout all correct), so the bug was invisible during code review and during HTTP-based testing from this sandbox.
+- **What I missed on the original rewrite**: I copied the design *tokens* (colour palette, font-family fallback chains) but not the *registration* step. The original Hugo/PaperMod site had `@font-face` blocks because it was the only way to use a custom font. With Astro + plain CSS, the same `@font-face` blocks are needed — but easy to overlook because the rest of the styling works without them.
+- **Detected when**: owner opened the live site in a real browser and reported "the Chinese font never correctly render, default browser font". From the sandbox, `curl https://buc.ketli.st/assets/*.css | grep -c '@font-face'` returned `0` — instant diagnosis.
+- **Fix**: add `@font-face` declarations for DC-CST and awkwardblack at the top of `src/styles/global.css` (commit `8c233b4`).
+- **Rejected**:
+  - **Auto-detect by AST scan** of CSS files for unmatched `font-family` references — too clever, prone to false positives (some font names are system fonts).
+  - **Move `@font-face` into a build step** — Astro doesn't need this; plain CSS is fine.
+- **Consequence**: AGENTS.md now has a one-line guardrail under "Things to never do".
+- **Cost to revisit**: if Astro / Vite ever adds built-in `@font-face` hinting (CSS Modules-style), drop the guardrail.
