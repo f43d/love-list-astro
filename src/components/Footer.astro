@@ -1,0 +1,36 @@
+---
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <p>
+    翁強用愛發電<br />
+    <a href="https://astro.build/" rel="noopener noreferrer" target="_blank">Astro</a>
+    全力支持
+  </p>
+  <p>
+    <a href="/comment/" rel="noopener noreferrer">祝福我們 ❤️</a>
+  </p>
+  <p>版權所有 © {year} buc.ketli.st</p>
+</footer>
+
+<a href="#top" class="to-top" aria-label="回到頂部" title="回到頂部">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor" width="14" height="10" aria-hidden="true">
+    <path d="M12 6H0l6-6z" />
+  </svg>
+</a>
+
+<script>
+  const btn = document.querySelector('.to-top');
+  if (btn) {
+    const onScroll = () => {
+      if (window.scrollY > 400) btn.classList.add('is-visible');
+      else btn.classList.remove('is-visible');
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+</script>

@@ -1,0 +1,27 @@
+---
+const {
+  server = 'https://wish.sorio.us',
+  site = 'bucketlist',
+  pageKey = '/',
+  pageTitle = '祝福我們',
+} = Astro.props;
+---
+<div id="Comments"></div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/artalk/2.9.1/Artalk.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/artalk/2.9.1/Artalk.js"></script>
+
+<script is:inline define:vars={{ server, site, pageKey, pageTitle }}>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Artalk === 'undefined') return;
+    Artalk.init({
+      el: '#Comments',
+      pageKey,
+      pageTitle,
+      server,
+      site,
+      locale: 'en',
+      darkMode: false,
+    });
+  });
+</script>

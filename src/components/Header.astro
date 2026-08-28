@@ -1,0 +1,37 @@
+---
+const marriageDate = '2002-03-03';
+---
+<header class="site-header">
+  <div class="site-header__inner">
+    <img class="site-header__photo" src="/images/profile.jpg" alt="" width="160" height="160" loading="eager" />
+    <div class="site-header__text">
+      <p class="counter">
+        笑淚同行 <span id="days-counter">0</span>
+      </p>
+      <h2 class="site-header__title">
+        <span id="years-counter"></span>前，我有<a href="/100-reasons-why/">一百個不結婚的理由</a>。
+      </h2>
+      <p class="site-header__subtitle">今日，我只想和你做100件事！</p>
+    </div>
+  </div>
+</header>
+
+<script is:inline define:vars={{ marriageDate }}>
+  (function () {
+    const start = new Date(marriageDate + 'T00:00:00');
+    const dayEl = document.getElementById('days-counter');
+    const yearEl = document.getElementById('years-counter');
+    if (!dayEl || !yearEl) return;
+
+    function update() {
+      const diff = Date.now() - start.getTime();
+      const days = Math.floor(diff / 86400000);
+      const years = Math.floor(days / 365.25);
+      dayEl.textContent = `${days} 天`;
+      yearEl.textContent = `${years}`;
+    }
+
+    update();
+    setInterval(update, 86400000);
+  })();
+</script>

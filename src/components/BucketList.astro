@@ -1,0 +1,36 @@
+---
+import { loadListSorted } from '../lib/parseList';
+
+const items = loadListSorted();
+
+function pickRandomInt(max: number): number {
+  return 1 + Math.floor(Math.random() * max);
+}
+---
+<section class="bucket-list" aria-label="Bucket list">
+  {items.map((item, i) => {
+    const checkNum = pickRandomInt(4);
+    const variant = i % 4 + 1;
+    const checkSrc = item.checked
+      ? `/svg/checkboxes/checked${checkNum}.svg`
+      : `/svg/checkboxes/unchecked${variant}.svg`;
+    const href = item.link && item.link !== 'https://example.com'
+      ? item.link
+      : `#item-${item.num}`;
+    const isExternal = href.startsWith('http');
+    return (
+      <div class={`list-item${item.checked ? ' is-checked' : ''}`} id={`item-${item.num}`}>
+        <img class="list-item__check" src={checkSrc} alt="" width="48" height="48" loading="lazy" />
+        <span class="list-item__check-spacer" aria-hidden="true"></span>
+        <span class="list-item__num">{item.num}.</span>
+        <span class="list-item__num-spacer" aria-hidden="true"></span>
+        <a
+          class="list-item__text"
+          href={href}
+          target={isExternal ? '_blank' : undefined}
+          rel={isExternal ? 'noopener noreferrer' : undefined}
+        >{item.text}</a>
+      </div>
+    );
+  })}
+</section>

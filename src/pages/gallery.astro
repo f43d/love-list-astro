@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import Gallery from '../components/Gallery.astro';
+
+const images = [
+  { full: '/images/gallery/test-01.jpg', thumb: '/images/gallery/test-01_t.jpg', alt: 'Berlin 1' },
+  { full: '/images/gallery/test-02.jpg', thumb: '/images/gallery/test-02_t.jpg', alt: 'Berlin 2' },
+  { full: '/images/gallery/test-03.jpg', thumb: '/images/gallery/test-03_t.jpg', alt: 'Berlin 3' },
+  { full: '/images/gallery/test-04.jpg', thumb: '/images/gallery/test-04_t.jpg', alt: 'Berlin 4' },
+  { full: '/images/gallery/test-05.jpg', thumb: '/images/gallery/test-05_t.jpg', alt: 'Berlin 5' },
+  { full: '/images/gallery/test-06.jpg', thumb: '/images/gallery/test-06_t.jpg', alt: 'Berlin 6' },
+  { full: '/images/gallery/test-07.jpg', thumb: '/images/gallery/test-07_t.jpg', alt: 'Berlin 7' },
+  { full: '/images/gallery/test-08.jpg', thumb: '/images/gallery/test-08_t.jpg', alt: 'Berlin 8' },
+];
+---
+<Base title="Gallery" description="Bucket-list photo gallery." showHeader={false}>
+  <a id="top"></a>
+  <Gallery images={images} />
+</Base>

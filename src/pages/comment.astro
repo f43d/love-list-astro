@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import Artalk from '../components/Artalk.astro';
+---
+<Base
+  title="祝福我們"
+  description="留下你對我們的祝福 ❤️"
+>
+  <a id="top"></a>
+  <article class="page">
+    <h1 class="page__title">祝福我們</h1>
+    <div class="content-text">
+      <p>給我們留下一句話、一段回憶、一份祝福 —— 都好。</p>
+    </div>
+    <Artalk server="https://wish.sorio.us" site="bucketlist" pageKey="/comment/" pageTitle="祝福我們" />
+  </article>
+</Base>

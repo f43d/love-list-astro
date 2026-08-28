@@ -1,0 +1,46 @@
+---
+interface Image { full: string; thumb: string; alt?: string }
+interface Props { images: Image[] }
+const { images } = Astro.props;
+---
+<section class="gallery" id="gallery">
+  {images.map((img) => (
+    <button
+      class="gallery__item"
+      type="button"
+      data-full={img.full}
+      aria-label={img.alt ?? 'Open image'}
+    >
+      <img src={img.thumb} alt={img.alt ?? ''} loading="lazy" />
+    </button>
+  ))}
+</section>
+
+<dialog class="lightbox" id="lightbox">
+  <button class="close" type="button" aria-label="Close">×</button>
+  <img id="lightbox-img" alt="" />
+</dialog>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
+  const dialogImg = document.getElementById('lightbox-img') as HTMLImageElement | null;
+  const closeBtn = dialog?.querySelector('.close') as HTMLButtonElement | null;
+
+  document.querySelectorAll<HTMLButtonElement>('.gallery__item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const full = btn.dataset.full;
+      if (!full || !dialog || !dialogImg) return;
+      dialogImg.src = full;
+      dialogImg.alt = btn.getAttribute('aria-label') ?? '';
+      dialog.showModal();
+    });
+  });
+
+  closeBtn?.addEventListener('click', () => dialog?.close());
+  dialog?.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') dialog?.close();
+  });
+</script>
