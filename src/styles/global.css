@@ -1,3 +1,22 @@
+/* === Font faces === */
+@font-face {
+  font-family: 'DC-CST';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/DC-CST.woff2') format('woff2'),
+       url('/fonts/DC-CST.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'awkwardblack';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/awkwardblack.woff2') format('woff2'),
+       url('/fonts/awkwardblack.woff') format('woff');
+}
+
 /* === Design tokens (preserved from the original site) === */
 :root {
   --color-text: #2f5061;
