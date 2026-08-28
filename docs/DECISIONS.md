@@ -71,3 +71,18 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
 
 - **Status**: described in README, not built.
 - **Reason**: at expected volume (a few per year), a one-time pre-filled link copy-pasted from the README is enough. A helper page would save ~10 s per approval at the cost of building another route and form. Will build only if volume grows.
+
+## 2026-08-28 — Don't install oh-my-opencode-slim (yet)
+
+- **Decision**: do not install oh-my-opencode-slim (a multi-agent orchestration plugin for opencode).
+- **Context**: asked about it after seeing praise online; the bucket-list site is already live on Astro + GitHub Pages and the remaining work (blessing form, content tweaks) is single-file and small.
+- **Rejected**: install and use it for the bucket-list project — adds API cost, configuration overhead, and a second rate-limit surface for negligible gain on a 4-page static site.
+- **Cost to revisit**: revisit if any project needs a multi-file refactor that a single AI context can't comfortably hold (e.g. a full visual redesign, a major framework swap, a multi-service integration).
+
+## 2026-08-28 — Reusable project-scaffold repo for future projects
+
+- **Decision**: publish `f43d/project-scaffold` as a public starter template containing the AGENTS.md + docs/ + scripts/end-of-day.mjs + CHANGELOG.md convention.
+- **Context**: the documentation discipline just established for `love-list-astro` would benefit any future project; cloning/hand-rebuilding it per project is friction.
+- **Rejected**: keep it as an unstated convention (re-discovery cost too high for future me / future agents); vendor it inside `love-list-astro` (couples unrelated projects).
+- **Consequence**: one-line `git clone https://github.com/f43d/project-scaffold.git my-thing` produces a complete scaffold with end-of-day routine baked in.
+- **Cost to revisit**: if the convention needs to fork (e.g. Python projects get a different parseX script), split into `project-scaffold-js` / `project-scaffold-py`.

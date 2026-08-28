@@ -110,3 +110,38 @@ D  src/components/Artalk.astro
 ```
 
 (`A` = added, `M` = modified, `D` = deleted)
+
+---
+
+# End of day — additional notes (00:20)
+
+## What was done in the second half
+
+- Built the documentation discipline / "end-of-day" routine:
+  - `scripts/end-of-day.mjs` — snapshot tool that diffs against the latest session file.
+  - `AGENTS.md` updated with end-of-day protocol for future agents.
+  - `docs/OPERATIONS.md` updated with the user ↔ agent procedure.
+  - `npm run end-of-day` / `npm run end-of-day:md` exposed.
+- Discussed installing `oh-my-opencode-slim`; **decided against** (see DECISIONS).
+- Created `f43d/project-scaffold` as a reusable starter for future projects
+  (template AGENTS.md, docs/, scripts/end-of-day.mjs, CHANGELOG, MIT).
+
+## Open items (carry-over)
+
+- Set `PUBLIC_WEB3FORMS_KEY` in GitHub Variables.
+- Verify the cert for `buc.ketli.st` — was provisioning at session end;
+  fonts should now load over HTTPS.
+- Test blessing form end-to-end (submit → email → Issue → published).
+- Replace the 3 placeholder `https://example.com` links for items 14, 28, 43
+  with real Cloudflare R2 URLs.
+- **Revoke both PATs** pasted today:
+  `…jdrra` (love-list-astro) and `…0bft3` (project-scaffold).
+- Mark `f43d/project-scaffold` as a GitHub template repo
+  (Settings → "Template repository").
+
+## What's next time
+
+The site is feature-complete enough to pause on. Next session can be:
+- finish blessing form setup,
+- link real images for checked items, or
+- start a brand-new project with `project-scaffold` as the starting point.
