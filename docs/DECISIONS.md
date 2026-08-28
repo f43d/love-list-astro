@@ -1,0 +1,73 @@
+# Decision log
+
+Append-only. Newest entry at the bottom. Each entry captures one design decision plus its context and rejected alternatives.
+
+---
+
+## 2026-08-28 — Stack: Astro 5 over Hugo
+
+- **Decision**: rewrite the bucket-list site from Hugo (paperMod theme) to Astro 5.
+- **Context**: site is essentially static content — a single list page, three secondary pages, JSON-driven data. Hugo works but the user prefers a more modern toolchain.
+- **Rejected**:
+  - **Stay on Hugo**: same outputs, but Go templates + PaperMod feel dated; user wants something newer.
+  - **Next.js (static export)**: heavier than needed; brings React ecosystem overhead.
+  - **Eleventy**: similar simplicity to Hugo; no clear upside for one project.
+- **Consequence**: gained components, real TypeScript, modern CSS pipeline. Lost: zero-dep build (`node_modules` shipped in CI).
+- **Cost to revisit**: if Astro's direction changes (e.g. moves to Vue-only), plan an escape route via `astro build` static output that any 11ty/Next/Hand-rolled static site can re-host.
+
+## 2026-08-28 — Data file: pipe-separated `.env`
+
+- **Decision**: store the 100 bucket items in `data/list.env` using `NN|checked|text|link` instead of the original `data/list.json`.
+- **Context**: user explicitly requested a `.env`-style file. The site has 92 rows with fixed columns — almost flat.
+- **Rejected**:
+  - **Markdown front matter per item**: 92 files vs 1; harder to scan, harder to diff.
+  - **JSON via build hook**: same content, more syntax friction for human edits.
+  - **TOML / YAML**: less of an "env" feel than the user asked for.
+- **Format rules** (see header in `data/list.env`):
+  - Lines starting with `#` ignored.
+  - Pipe is reserved → use `/` in payloads if needed.
+  - Last field (`link`) may be empty.
+- **Cost to revisit**: if items ever gain &gt;4 fields (e.g. image, location, season), switch to per-item `.md` files with frontmatter. The parser interface (`loadListSorted`) won't change.
+
+## 2026-08-28 — Comment system: Web3Forms + GitHub Issues (not Artalk, not Giscus)
+
+- **Decision**: replace the Hugo-era Artalk setup with a Web3Forms-bound form + GitHub-Issues approval queue + auto-publish Action.
+- **Context**: site is private, very low expected comment volume, owner explicitly wants moderation-before-publish. Previous setup required running a separate server (`wish.sorio.us`) — extra moving piece with no benefit at this volume.
+- **Rejected**:
+  - **Keep Artalk**: requires owner to keep `wish.sorio.us` running; no additional value at this volume.
+  - **Giscus (GitHub Discussions backed)**: zero infra, but reads are public and require commenter sign-in via GitHub — too public for the user's taste.
+  - **Staticman**: largely abandoned project; not a fit for current ecosystem.
+  - **Cloudflare Worker for one-click approve**: doable, but adds a serverless function + another GitHub PAT to maintain; not worth it at low volume.
+- **How it works**: see `docs/ARCHITECTURE.md` §"Moderation flow".
+- **Privacy**: emails collected but not stored on the site. Only `name + message` are surfaced.
+- **Cost to revisit**: if comment volume becomes &gt;10/week OR if multi-page comments are wanted (per-item discussion), move to Giscus or a self-hosted Artalk.
+
+## 2026-08-28 — No jQuery / no nanogallery2
+
+- **Decision**: gallery is implemented with native CSS Grid + native `<dialog>` for the lightbox. Marriage counter, back-to-top, and lightbox are all vanilla JS.
+- **Context**: original site loaded jQuery 3.7.1 and nanogallery2 3.0.5 purely to render thumbnails and a lightbox. Same effect achievable in ~150 lines without dependencies.
+- **Rejected**: keep nanogallery2 (deprecated maintenance, large bundle).
+- **Consequence**: drop two CDN dependencies (~80 KB pre-gzip). No jQuery Sizzle for legacy browsers.
+- **Cost to revisit**: if a future feature needs a heavy client lib (image filters, swipe, video playback), re-evaluate.
+
+## 2026-08-28 — Fonts: keep DC-CST + awkwardblack as static assets
+
+- **Decision**: ship hand-written Chinese fonts (`DC-CST.woff2`, `awkwardblack.woff2`) under `/fonts/`, preloaded as `font-display: swap`.
+- **Context**: design language is built around these. Replacing them would lose the "handwritten" personality of the original site.
+- **Rejected**: self-host via Google Fonts (no equivalent for DC-CST).
+- **Cost to revisit**: if browsing on slow 4G causes visible text swap, consider subsetting DC-CST to Latin + common CJK punctuation only.
+
+## 2026-08-28 — Custom domain: GitHub Pages, not Cloudflare Pages
+
+- **Decision**: serve the site from GitHub Pages, not Cloudflare Pages.
+- **Context**: user is comfortable with GitHub deployment. Cloudflare Pages would require moving DNS to Cloudflare (already happens) but adds another CI provider.
+- **Rejected**: Cloudflare Pages (wrangler, Workers alignment, but extra product to learn).
+- **DNS scheme** (apex-friendly since `buc.ketli.st` cannot be a CNAME):
+  - Four A records at `buc` → `185.199.108.153`, `.154`, `.155`, `.156`, all **DNS only**.
+  - Cert is auto-issued by GitHub via Let's Encrypt.
+- **Cost to revisit**: if build time grows beyond ~1 min or image count exceeds a few hundred, Cloudflare Pages will out-perform.
+
+## 2026-08-28 — Documented-but-not-implemented helper: blessing-approval URL generator
+
+- **Status**: described in README, not built.
+- **Reason**: at expected volume (a few per year), a one-time pre-filled link copy-pasted from the README is enough. A helper page would save ~10 s per approval at the cost of building another route and form. Will build only if volume grows.
