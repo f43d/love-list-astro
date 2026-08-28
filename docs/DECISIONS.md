@@ -98,3 +98,17 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - **Move `@font-face` into a build step** — Astro doesn't need this; plain CSS is fine.
 - **Consequence**: AGENTS.md now has a one-line guardrail under "Things to never do".
 - **Cost to revisit**: if Astro / Vite ever adds built-in `@font-face` hinting (CSS Modules-style), drop the guardrail.
+
+## 2026-08-28 — Inherited typos from the Hugo original: log each fix to keep the trail
+
+- **Decision**: when fixing typos inherited from the original Hugo site, append a note to this log (DECISIONS.md) so future agents / future-you can spot patterns.
+- **Context**: three Chinese-text fixes happened in this session, two of which were inherited from the Hugo original and only noticed on the live site:
+  1. `籍口` → `藉口` ×3 (in `Base.astro` and `100-reasons-why.astro`) — wrong homoglyph; correct word is 藉 (jiè, "pretext").
+  2. `前` → `年前` + remove trailing `。` in `Header.astro` — missing 年 between year count and 前.
+  3. Em-dash inconsistency in `BlessingForm.astro` — single `—` vs site-wide `——` (this one is mine, not inherited; included for completeness).
+- **Pattern**: a static-site migration that copies content "verbatim" inherits *all* the typos of the original. The original was the source of truth, so I copied character-for-character — including typos that look plausible to a non-native reader.
+- **Rejected**:
+  - **Don't log individual fixes** (too noisy for the file's purpose of recording decisions). — but they're not decisions, they're typo fixes; lumping them obscures the actual decision being recorded here, which is *the meta-policy of logging them*.
+  - **"Fix all typos in the original Hugo"** as one big commit. — would be unreviewable; better to fix one at a time so each is reviewable in PR.
+- **Consequence**: future me / future agents reading this file will see (a) the existence of inherited typos, (b) the convention to log them, (c) a small but growing list of "things the original Hugo got wrong". When the project-scaffold convention is reused for a future migration, this entry is a reminder to audit the source for typos BEFORE copy-paste.
+- **Cost to revisit**: when the typo list grows past ~20 entries, consider extracting to a dedicated `docs/TYPOS.md` so DECISIONS.md stays focused on architecture/strategy decisions.
