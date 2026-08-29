@@ -79,10 +79,18 @@ body {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 1rem;
-  background-color: var(--bg-overlay);
+  /* background-color removed — header is now fully transparent.
+     backdrop-filter still applies (blurs content behind it), but no
+     visible box shape. */
+  background-color: transparent;
   backdrop-filter: blur(var(--bg-overlay-blur));
   -webkit-backdrop-filter: blur(var(--bg-overlay-blur));
-  border-radius: var(--radius-lg);
+  /* border-radius removed so there are no visible rounded corners.
+     mask-image fades the blur out at the bottom for a seamless blend
+     into the page below. */
+  border-radius: 0;
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
 }
 
 .site-header__inner {
