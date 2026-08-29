@@ -303,12 +303,27 @@ body {
   padding-top: clamp(7rem, 28vw, 18rem);
 }
 
-@media (max-width: 1024px) {
-  .page { padding-top: clamp(6rem, 24vw, 14rem); }
+/* === Portrait phones: header is in column layout (photo above text)
+   and grows tall (~170-180px on iPhone Pro Max portrait). The default
+   padding-top above isn't enough — the first list item is fully behind
+   the header. This rule bumps the padding so the header + its bottom
+   blur-fade are fully cleared. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .bucket-list,
+  .page,
+  .gallery {
+    padding-top: clamp(11rem, 22vh, 16rem);
+  }
+  /* And shrink the header photo so the column-stack header isn't
+     quite as tall in the first place. */
+  .site-header__photo {
+    width: clamp(3rem, 12vw, 4.5rem);
+    height: clamp(3rem, 12vw, 4.5rem);
+  }
 }
 
-@media (max-width: 768px) {
-  .page { padding-top: clamp(5rem, 20vw, 8rem); }
+@media (max-width: 1024px) {
+  .page { padding-top: clamp(6rem, 24vw, 14rem); }
 }
 
 .page__title {
