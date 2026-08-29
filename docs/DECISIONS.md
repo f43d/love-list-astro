@@ -186,3 +186,61 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - **Including passwords** — the document is in a public repo; credentials go elsewhere.
 - **Consequence**: One glance at the file tells a future-you (or anyone) how to recover the site. Placeholder sections (`<fill in>`) for the owner's specific registrar info.
 - **Cost to revisit**: when domain or GitHub account changes.
+
+## 2026-08-29 — Photos managed via in-browser settings page
+
+- **Decision**: a hidden `/settings/` page lets the owner upload, edit, and
+  delete photos through a UI instead of editing `data/gallery.env` in
+  the GitHub web UI. Owner-only — no link anywhere on the public site.
+- **Context**: the user wanted to streamline the upload workflow
+  (resize + WebP convert + commit) without running a server.
+- **Rejected**:
+  - **Cloudflare R2 / Backblaze B2** — adds a third-party dependency
+    and a recurring account to maintain. The "GitHub is the only
+    storage" rule (see 2026-08-29 decisions) wins again.
+  - **Self-hosted photo manager (Immich / PhotoPrism / Lychee)** —
+    requires a running server. Maintenance burden opposite to the
+    project's goal.
+  - **Downloadable .zip patch (no PAT)** — usable but every upload
+    becomes multi-step (download → GitHub web upload → edit env file).
+    With a fine-grained PAT scoped to one repo, the all-in-one UI
+    wins on time spent.
+- **Consequence**:
+  - The settings page holds the PAT in `sessionStorage` (cleared on
+    tab close) — NOT `localStorage`. Limits exposure to a single
+    session. User must re-paste next time.
+  - The image-processing pipeline (canvas → `toBlob('image/webp', 0.85)`,
+    max 1600 px wide) runs entirely in the browser.
+  - AGENTS.md gets a rule: never link to `/settings/` from public pages.
+- **Cost to revisit**: if multi-user editing is ever needed (e.g.
+  wife also wants to add photos), this won't work. Switch to a
+  proper backend or a host with native multi-user support.
+
+## 2026-08-29 — 泪 (SC) replaces 淚 / 涙 in site text
+
+- **Decision**: use the Simplified Chinese 泪 (U+6CEA) for the "tears"
+  glyph in the header and 100-reasons-why prose. NOT 淚 (TC, U+6DDA)
+  and NOT 涙 (JP, U+6D99), both of which are in DC-CST's coverage gap.
+- **Context**: a custom handwritten font (DC-CST) is used throughout.
+  It has ~9k CJK glyphs but misses several common Traditional
+  Chinese characters. My earlier codepoint check had the wrong hex
+  for 淚 (used 6D9A instead of 6DDA) and reported it as in-cmap. The
+  user noticed the title was still not rendering correctly, which
+  triggered a full audit.
+- **Rejected**:
+  - **Self-host a comprehensive CJK font as fallback (Noto Serif TC)**
+    — owner prefers pure custom-font render. Adds ~3 MB to the
+    bundle and creates a visual mismatch (handwritten vs serif).
+  - **Switch primary font to Noto Serif TC** — loses the handwritten
+    identity of the original site.
+  - **Re-spell the phrase** — "笑泪同行" is the established text in
+    the original Hugo site; changing it loses the personal continuity.
+- **Consequence**:
+  - One "tears" character used consistently across the site (header,
+    100-reasons-why, HISTORY.md). 泪 reads identically in Cantonese
+    ("leoi4") to 淚.
+  - The visual glyph is the Simplified form, not Traditional. Visitors
+    familiar with the TC form may notice. Owner accepted this trade.
+  - A future font with broader coverage (or font subsetting) could
+    swap 泪 back to 淚 in one place.
+- **Cost to revisit**: only if a future font has 淚 and not 泪 (unlikely).

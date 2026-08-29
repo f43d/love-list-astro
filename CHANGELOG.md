@@ -66,3 +66,25 @@ Brand new site, brand new stack.
 - The original Hugo repo `f43d/papermod-lovelist4` is left untouched as historical reference.
 - 92 bucket items transferred 1:1 (same `id`, `text`, `checked` state).
 - The three items already checked (`id` 14, 28, 43) currently still have `link: https://example.com` — set real photo URLs in `data/list.env` to make them clickable.
+
+## 2026-08-29 — Settings page, glyph fix, header redesign
+
+### Added
+
+- Hidden `/settings/` page for owner-only photo management. Auth via
+  GitHub PAT (sessionStorage). Upload, edit, delete photos and link
+  them to bucket list items. Commits via GitHub Contents API trigger
+  the existing deploy.
+
+### Fixed
+
+- 淚 / 涙 missing from DC-CST — replaced with 泪 (Simplified Chinese)
+  across header, 100-reasons-why link, and HISTORY.md.
+- Header box had a visible boundary — now transparent, square corners,
+  with a mask gradient to fade the blur at the bottom edge.
+
+### Changed
+
+- Lightbox caption now reads from a JSON blob rendered by Astro, not
+  from a DOM lookup. Eliminates a class of bugs where the caption
+  could get out of sync with the photo.
