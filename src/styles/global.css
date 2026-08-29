@@ -33,6 +33,7 @@
 
   --bg-overlay: rgba(255, 255, 255, 0.1);
   --bg-overlay-blur: 6px;
+  --color-text-focal: #b04e58;
 }
 
 /* === Reset === */
@@ -199,8 +200,8 @@ body {
     opacity: 0.65;
   }
   50% {
-    transform: scale(1.25);
-    color: var(--color-text-hover);
+    transform: scale(1.3);
+    color: var(--color-text-focal);
     opacity: 1;
   }
 }
@@ -233,6 +234,8 @@ body {
   .list-item__check-spacer { width: 0.5rem; }
   .list-item__num, .list-item__text { font-size: 1.5rem; }
   .list-item__num-spacer { width: 0.75rem; }
+  .list-item.is-checked .list-item__num { font-size: 1.6rem; }
+  .list-item.is-checked .list-item__text { font-size: 1.45rem; }
 }
 
 @media (max-width: 768px) {
@@ -240,13 +243,18 @@ body {
   .list-item__check-spacer { width: 0.4rem; }
   .list-item__num, .list-item__text { font-size: 1.1rem; }
   .list-item__num-spacer { width: 0.5rem; }
+  .list-item.is-checked .list-item__num { font-size: 1.25rem; }
+  .list-item.is-checked .list-item__text { font-size: 1.15rem; }
 }
 
 .list-item.is-checked .list-item__num,
 .list-item.is-checked .list-item__text {
   position: relative;
-  opacity: 0.6;
+  /* Bump font-size so checked items look proportionally "normal"
+     when neighbouring unchecked items grow in the focal zoom. */
+  font-size: 1.8rem;
 }
+.list-item.is-checked .list-item__text { font-size: 1.6rem; }
 
 .list-item.is-checked .list-item__num::after,
 .list-item.is-checked .list-item__text::after {
