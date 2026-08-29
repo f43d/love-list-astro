@@ -112,3 +112,20 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - **"Fix all typos in the original Hugo"** as one big commit. — would be unreviewable; better to fix one at a time so each is reviewable in PR.
 - **Consequence**: future me / future agents reading this file will see (a) the existence of inherited typos, (b) the convention to log them, (c) a small but growing list of "things the original Hugo got wrong". When the project-scaffold convention is reused for a future migration, this entry is a reminder to audit the source for typos BEFORE copy-paste.
 - **Cost to revisit**: when the typo list grows past ~20 entries, consider extracting to a dedicated `docs/TYPOS.md` so DECISIONS.md stays focused on architecture/strategy decisions.
+
+## 2026-08-28 — Link style: palette accent color, no underlines
+
+- **Decision**: all links in this site use `color: var(--color-text-hover)` (coral `#e57f84`) with no text-decoration underline. Hover/focus drops opacity to 0.65.
+- **Context**: original Hugo site had `text-decoration: underline` on every link. Owner found this "old school" and visually clashing with the handwritten DC-CST aesthetic. Asked to switch to a more subtle indicator using a color from the existing palette.
+- **Rejected**:
+  - **Different colour per link context** (e.g., teal in header, coral in body) — adds visual noise; one rule is cleaner.
+  - **Dotted underline in subtle colour** — still a 1990s link affordance.
+  - **Underline on hover only** — common modern pattern, but the user explicitly wanted no underline.
+  - **Use `--color-text` (teal) for the link** — the link needs a different colour from surrounding text to be distinguishable; teal is the body colour, not the accent.
+- **Affected selectors** (all three get the same treatment):
+  - `.site-header__title a` — header link to `/100-reasons-why/`
+  - `.content-text a` — links inside `/100-reasons-why/` and `/comment/` body prose
+  - `.site-footer a` — footer links
+- **Consequence**: any future link added to the site should inherit the same coral accent. Add to AGENTS.md so future agents don't accidentally re-introduce underlines.
+- **Cost to revisit**: if a long-form-prose context ever has accessibility constraints (low-vision users, high-contrast mode), reconsider — underlines are more discoverable than colour alone. For now, the photo-led design + DC-CST handwriting keeps the page calm and underlines would over-emphasise.
+- **Commits**: `e7d2545` (header), `5215eae` (body + footer).

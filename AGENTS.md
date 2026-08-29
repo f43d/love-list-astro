@@ -65,6 +65,7 @@ Do **not** invent decisions that weren't discussed. If unsure, ask. Prefer to sk
 - Don't create issues on the user's behalf; the moderation flow expects the user to drive approvals.
 - Don't commit secrets (`PUBLIC_WEB3FORMS_KEY` lives in `.env` / GitHub Variables, not source).
 - **Don't ship a site without verifying `@font-face` declarations exist for every named font.** Token references (`font-family: 'DC-CST'`) are not enough — the browser needs `@font-face` to know where to download the font files. If only fallbacks are referenced, fonts silently render as system defaults and the bug is invisible until a non-Latin user visits. See DECISIONS.md entry 2026-08-28.
+- **Don't add `text-decoration: underline` to any link.** All links in this site use `color: var(--color-text-hover)` (coral) with opacity 0.65 on hover/focus. The pattern lives in `.site-header__title a`, `.content-text a`, `.site-footer a`. New links must follow the same pattern. See DECISIONS.md entry 2026-08-28.
 
 ## Owners / context
 
