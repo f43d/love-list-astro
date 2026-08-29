@@ -1,19 +1,45 @@
 ---
 import Base from '../layouts/Base.astro';
 import Gallery from '../components/Gallery.astro';
+import { loadGallerySorted } from '../lib/parseGallery';
 
-const images = [
-  { full: '/images/gallery/test-01.jpg', thumb: '/images/gallery/test-01_t.jpg', alt: 'Berlin 1' },
-  { full: '/images/gallery/test-02.jpg', thumb: '/images/gallery/test-02_t.jpg', alt: 'Berlin 2' },
-  { full: '/images/gallery/test-03.jpg', thumb: '/images/gallery/test-03_t.jpg', alt: 'Berlin 3' },
-  { full: '/images/gallery/test-04.jpg', thumb: '/images/gallery/test-04_t.jpg', alt: 'Berlin 4' },
-  { full: '/images/gallery/test-05.jpg', thumb: '/images/gallery/test-05_t.jpg', alt: 'Berlin 5' },
-  { full: '/images/gallery/test-06.jpg', thumb: '/images/gallery/test-06_t.jpg', alt: 'Berlin 6' },
-  { full: '/images/gallery/test-07.jpg', thumb: '/images/gallery/test-07_t.jpg', alt: 'Berlin 7' },
-  { full: '/images/gallery/test-08.jpg', thumb: '/images/gallery/test-08_t.jpg', alt: 'Berlin 8' },
-];
+const items = loadGallerySorted();
+const total = items.length;
 ---
-<Base title="Gallery" description="Bucket-list photo gallery." showHeader={false}>
+<Base title="Gallery" description="Photo gallery from the bucket list." showHeader={true}>
   <a id="top"></a>
-  <Gallery images={images} />
+  <article class="page">
+    <h1 class="page__title">Photo Gallery</h1>
+    <p class="page__gallery-meta">
+      {total} photos · deep-link via <code>#NN</code>
+    </p>
+    <Gallery />
+    <p class="page__gallery-hint">
+      Click any photo to view full-size. Use <kbd>←</kbd> <kbd>→</kbd> to navigate,
+      <kbd>Esc</kbd> to close. Swipe on mobile.
+    </p>
+  </article>
 </Base>
+
+<style>
+  .page__gallery-meta,
+  .page__gallery-hint {
+    font-family: var(--font-hand);
+    color: var(--color-text);
+    opacity: 0.7;
+    text-align: center;
+    font-size: 0.95em;
+  }
+  .page__gallery-meta code,
+  .page__gallery-hint code,
+  .page__gallery-hint kbd {
+    background: rgba(47, 80, 97, 0.1);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+  .page__gallery-hint kbd {
+    border: 1px solid rgba(47, 80, 97, 0.2);
+  }
+</style>

@@ -14,10 +14,21 @@ function pickRandomInt(max: number): number {
     const checkSrc = item.checked
       ? `/svg/checkboxes/checked${checkNum}.svg`
       : `/svg/checkboxes/unchecked${variant}.svg`;
-    const href = item.link && item.link !== 'https://example.com'
-      ? item.link
-      : `#item-${item.num}`;
-    const isExternal = href.startsWith('http');
+
+    // Decide link target.
+    // - checked + has photo id  → deep-link to gallery lightbox (`/gallery/#NN`)
+    // - has external link       → that link
+    // - placeholder link         → own anchor (no surprise 404s)
+    // - otherwise                → own anchor
+    let href = `#item-${item.num}`;
+    let isExternal = false;
+    if (item.checked && item.photo) {
+      href = `/gallery/#${item.photo}`;
+    } else if (item.link && item.link !== 'https://example.com') {
+      href = item.link;
+      isExternal = href.startsWith('http');
+    }
+
     return (
       <div class={`list-item${item.checked ? ' is-checked' : ''}`} id={`item-${item.num}`}>
         <img class="list-item__check" src={checkSrc} alt="" width="48" height="48" loading="lazy" />
@@ -25,11 +36,14 @@ function pickRandomInt(max: number): number {
         <span class="list-item__num">{item.num}.</span>
         <span class="list-item__num-spacer" aria-hidden="true"></span>
         <a
-          class="list-item__text"
+          class={`list-item__text${item.checked && item.photo ? ' list-item__text--has-photo' : ''}`}
           href={href}
           target={isExternal ? '_blank' : undefined}
           rel={isExternal ? 'noopener noreferrer' : undefined}
         >{item.text}</a>
+        {item.checked && item.photo && (
+          <span class="list-item__photo-icon" aria-hidden="true">📷</span>
+        )}
       </div>
     );
   })}

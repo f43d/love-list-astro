@@ -8,6 +8,7 @@ export interface BucketItem {
   text: string;
   checked: boolean;
   link: string;
+  photo: string;
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -21,8 +22,8 @@ function parseEnv(text: string): BucketItem[] {
     const line = raw.trim();
     if (!line || line.startsWith('#')) continue;
 
-    const [numRaw, checkedRaw, textRaw, linkRaw] = line.split('|');
-    if (!numRaw || textRaw === undefined) continue;
+const [numRaw, checkedRaw, textRaw, linkRaw, photoRaw] = line.split('|');
+    if (!numRaw) continue;
 
     const id = Number.parseInt(numRaw, 10);
     if (!Number.isFinite(id)) continue;
@@ -33,6 +34,7 @@ function parseEnv(text: string): BucketItem[] {
       checked: checkedRaw?.trim().toLowerCase() === 'true',
       text: textRaw.trim(),
       link: (linkRaw ?? '').trim(),
+      photo: (photoRaw ?? '').trim(),
     });
   }
   return out;
