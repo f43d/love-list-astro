@@ -24,6 +24,7 @@
 
   --font-hand: 'DC-CST', 'STKaiti', 'BiauKai', 'Noto Serif TC', serif;
   --font-display: 'awkwardblack', 'Roboto', system-ui, sans-serif;
+  --font-prose: 'wenwrite', 'DC-CST', 'STKaiti', 'BiauKai', 'Noto Serif TC', serif;
   --font-form: 'Noto Sans HK', system-ui, -apple-system, 'PingFang HK', 'Microsoft JhengHei', sans-serif;
 
   --container-max: 800px;
@@ -306,6 +307,14 @@ body {
   color: var(--color-text);
   padding-top: 50px;
   margin-bottom: 3rem;
+}
+
+/* Wenwrite — only for the long-form prose on /100-reasons-why/.
+   Subsetted to just the 244 codepoints used in that page (82 KB woff2). */
+.content-text--wenwrite {
+  font-family: var(--font-prose);
+  font-size: 1.35rem;
+  line-height: 2.1;
 }
 
 .content-text--form {
