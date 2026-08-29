@@ -22,7 +22,7 @@ Same look-and-feel, fewer moving parts, modern toolchain.
 - **Design palette**: text `#2f5061`, hover `#e57f84`, divider `silver`. Background photo, profile photo, header layout, list-item layout, random checkbox variant from set {1,2,3,4} per render.
 - **Marriage counter**: shows days + years since `2002-03-03`.
 - **100-reasons-why prose**: identical word-for-word. It's a personal artifact.
-- **Headlines**: "笑淚同行 X 天", "Y 年前，我有 [一百個不結婚的理由]"
+- **Headlines**: "笑泪同行 X 天", "Y 年前，我有 [一百個不結婚的理由]"
 - **Gallery**: 8 sample images, 4:3 thumbs, click-to-zoom.
 - **All browser-side assets** (`/fonts/`, `/images/`, `/svg/`).
 
