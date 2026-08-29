@@ -4,8 +4,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/DC-CST.woff2') format('woff2'),
-       url('/fonts/DC-CST.woff') format('woff');
+  src: url('/fonts/DC-CST.woff2') format('woff2');
 }
 
 @font-face {
@@ -13,8 +12,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/awkwardblack.woff2') format('woff2'),
-       url('/fonts/awkwardblack.woff') format('woff');
+  src: url('/fonts/awkwardblack.woff2') format('woff2');
 }
 
 /* === Design tokens (preserved from the original site) === */
@@ -300,6 +298,10 @@ body {
   color: var(--color-text);
   padding-top: 50px;
   margin-bottom: 3rem;
+}
+
+.content-text--form {
+  font-family: var(--font-form);
 }
 
 .content-text p { margin: 0 0 1em; }
