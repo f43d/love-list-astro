@@ -15,6 +15,14 @@
   src: url('/fonts/awkwardblack.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'wenwrite';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/wenwrite-subset.woff2') format('woff2');
+}
+
 /* === Design tokens (preserved from the original site) === */
 :root {
   --color-text: #2f5061;
