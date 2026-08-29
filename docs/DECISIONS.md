@@ -159,3 +159,30 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - **CSS `:has()` + scroll-driven** — too clever, no real benefit.
 - **Consequence**: pure CSS, GPU-accelerated, ~0 ms of JS. Requires Chrome 115+, Firefox 136+, Safari 18.0+ (basically universal by 2026).
 - **Cost to revisit**: if the focal zone feels too narrow on tall viewports, adjust `animation-range` to `cover 10% cover 90%`.
+
+## 2026-08-29 — Photos stored in the repo, no external image hosting
+
+- **Decision**: All gallery photos live in the repo (`public/images/gallery/` as WebP). No Cloudflare R2, no Backblaze B2, no ImgBB, no Immich.
+- **Context**: This site is a 60th-birthday gift for the owner's wife. The owner is ~70. Bucket list item 98 is about the owner's own funeral arrangements. **The site's primary success criterion is that it remains accessible after the owner is gone**, with the wife (non-technical) able to view it without any maintenance.
+- **Rejected**:
+  - **Cloudflare R2** — free egress but requires the account to remain active indefinitely. The owner's wife can't manage Cloudflare credentials. Account lapse = photos gone.
+  - **Backblaze B2** — same fundamental problem. Free tier can change, accounts lapse, billing fails.
+  - **ImgBB / Imgur / similar** — third-party hotlinking breaks when the host changes terms; not owned.
+  - **Self-hosted photo manager (Immich, PhotoPrism, etc.)** — requires a running server. Maintenance burden exactly opposite to the goal.
+- **Consequence**:
+  - Repo size grows by ~150 KB per photo. 100 photos ≈ 15 MB total — well within GitHub's recommended 1 GB per repo.
+  - Image quality capped at web-friendly (~2000 px wide JPEG/WebP). Original raws not stored.
+  - `data/gallery.env` already supports both repo paths and full URLs — same code works either way.
+  - One source of truth (the repo) for everything: code, content, photos, history.
+- **Cost to revisit**: only if (a) photo count exceeds ~500 and pushes repo size toward GitHub's soft cap, or (b) the owner wants to share full-resolution originals — both can be solved by attaching a USB drive separately, not by introducing an external service.
+
+## 2026-08-29 — `docs/PERMANENCE.md` written
+
+- **Decision**: Add a plain-language document listing where the site lives, who owns the domain, who has GitHub access, where backups are, and what to do if each piece breaks.
+- **Context**: see above. The owner asked for a written record that doesn't depend on him explaining things verbally one day.
+- **Rejected**:
+  - **Putting the plan in OPERATIONS.md** — that's for day-2 ops; permanence is a different topic.
+  - **Encrypting the document** — defeats the purpose (the document needs to be readable without 翁強 to be useful).
+  - **Including passwords** — the document is in a public repo; credentials go elsewhere.
+- **Consequence**: One glance at the file tells a future-you (or anyone) how to recover the site. Placeholder sections (`<fill in>`) for the owner's specific registrar info.
+- **Cost to revisit**: when domain or GitHub account changes.
