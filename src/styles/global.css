@@ -304,19 +304,24 @@ body {
 }
 
 /* === Portrait phones: header is in column layout (photo above text)
-   and grows tall. Bump padding-top so the header + its bottom blur-fade
-   are fully cleared, and shrink the header photo to keep the column
-   stack as compact as possible. */
+   and grows tall. Bump padding-top generously so the header + its bottom
+   blur-fade are fully cleared, shrink the header photo, and hide the
+   subtitle (lowest-value text) to keep the column stack as compact as
+   possible. */
 @media (max-width: 600px) and (orientation: portrait) {
   .bucket-list,
   .page,
   .gallery {
-    padding-top: clamp(13rem, 25vh, 18rem);
+    padding-top: clamp(15rem, 30vh, 22rem);
   }
   .site-header__photo {
-    width: clamp(2.75rem, 12vw, 4rem);
-    height: clamp(2.75rem, 12vw, 4rem);
+    width: clamp(2.5rem, 11vw, 3.5rem);
+    height: clamp(2.5rem, 11vw, 3.5rem);
   }
+  /* Hide the subtitle in portrait — it's the least informative line
+     and saves ~25px of vertical space. */
+  .site-header__subtitle { display: none; }
+  .site-header__title { margin-top: 0.25rem; }
 }
 
 @media (max-width: 1024px) {
