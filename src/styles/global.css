@@ -307,7 +307,15 @@ body {
    and grows tall. Bump padding-top generously so the header + its bottom
    blur-fade are fully cleared, shrink the header photo, and hide the
    subtitle (lowest-value text) to keep the column stack as compact as
-   possible. */
+   possible.
+
+   IMPORTANT: this rule must come AFTER any other .page / .bucket-list /
+   .gallery padding-top rules below (and the @media (max-width: 1024px)
+   one), otherwise it loses on source order when both rules match. */
+@media (max-width: 1024px) {
+  .page { padding-top: clamp(6rem, 24vw, 14rem); }
+}
+
 @media (max-width: 600px) and (orientation: portrait) {
   .bucket-list,
   .page,
@@ -322,10 +330,6 @@ body {
      and saves ~25px of vertical space. */
   .site-header__subtitle { display: none; }
   .site-header__title { margin-top: 0.25rem; }
-}
-
-@media (max-width: 1024px) {
-  .page { padding-top: clamp(6rem, 24vw, 14rem); }
 }
 
 .page__title {
