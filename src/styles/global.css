@@ -171,26 +171,27 @@ body {
   font-size: clamp(0.8rem, 0.65rem + 0.4vw, 0.9rem);
 }
 
-/* === Short viewports (e.g. iPhone landscape): generous header.
-   Owner asked for the landscape header to be 30-40% larger than
-   before — bigger photo, bigger text, more padding. */
+/* === Short viewports (e.g. iPhone landscape): even bigger header.
+   Owner asked for another ~30% increase on top of the last bump. */
 @media (max-height: 500px) {
   .site-header {
-    padding: 1rem 1.5rem;
+    padding: clamp(1.2rem, 1.8vw, 1.5rem);
   }
   .site-header__photo {
-    width: clamp(5rem, 20vh, 7rem);
-    height: clamp(5rem, 20vh, 7rem);
+    width: clamp(4rem, 35vh, 9rem);
+    height: clamp(4rem, 35vh, 9rem);
   }
-  .site-header__inner { gap: 1rem; }
+  .site-header__inner { gap: 1.3rem; }
 
   .counter {
-    font-size: clamp(1.4rem, 0.95rem + 1.6vw, 1.85rem);
+    font-size: clamp(1.8rem, 1.2rem + 1vw, 1.9rem);
     margin: 0 0 0.35rem;
   }
-  .site-header__title { font-size: clamp(1.3rem, 0.9rem + 0.7vw, 1.55rem); }
+  .site-header__title {
+    font-size: clamp(1.6rem, 1.05rem + 1.2vw, 1.85rem);
+  }
   .site-header__subtitle {
-    font-size: clamp(1.1rem, 0.75rem + 0.6vw, 1.35rem);
+    font-size: clamp(1.3rem, 0.95rem + 1vw, 1.6rem);
     margin: 0.35rem 0 0;
   }
 }
@@ -199,13 +200,13 @@ body {
    Keeps the fixed header + its bottom blur-fade clear of the content. */
 @media (max-height: 500px) {
   .bucket-list {
-    padding-top: clamp(7rem, 60vh, 14rem);
+    padding-top: clamp(30rem, 75vh, 40rem);
   }
   .page {
-    padding-top: clamp(7rem, 60vh, 14rem);
+    padding-top: clamp(30rem, 75vh, 40rem);
   }
   .gallery {
-    padding-top: clamp(7rem, 60vh, 14rem);
+    padding-top: clamp(30rem, 75vh, 40rem);
   }
 }
 
