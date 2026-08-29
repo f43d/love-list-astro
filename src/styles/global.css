@@ -318,7 +318,7 @@ body {
 @media (max-width: 480px) { .content-text { font-size: 1rem; } }
 
 .page__subtitle {
-  font-family: var(--font-display);
+  font-family: var(--font-form);
   color: var(--color-text);
   text-align: center;
   font-size: 1.4em;
@@ -442,6 +442,7 @@ body {
   text-align: center;
   color: var(--color-text);
   font-style: italic;
+  font-family: var(--font-form);
 }
 
 .blessings__list {
