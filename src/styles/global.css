@@ -23,45 +23,60 @@
   src: url('/fonts/wenwrite-subset.woff2') format('woff2');
 }
 
-/* === Design tokens (preserved from the original site) === */
+/* === Design tokens === */
 :root {
+  /* colours */
   --color-text: #2f5061;
   --color-text-hover: #e57f84;
   --color-divider: silver;
   --color-footer: #111;
+  --color-text-focal: #b04e58;
 
+  /* fonts */
   --font-hand: 'DC-CST', 'STKaiti', 'BiauKai', 'Noto Serif TC', serif;
   --font-display: 'awkwardblack', 'Roboto', system-ui, sans-serif;
   --font-prose: 'wenwrite', 'DC-CST', 'STKaiti', 'BiauKai', 'Noto Serif TC', serif;
   --font-form: 'Noto Sans HK', system-ui, -apple-system, 'PingFang HK', 'Microsoft JhengHei', sans-serif;
 
+  /* layout */
   --container-max: 800px;
   --radius-md: 12px;
   --radius-lg: 15px;
 
+  /* glass */
   --bg-overlay: rgba(255, 255, 255, 0.1);
   --bg-overlay-blur: 6px;
-  --color-text-focal: #b04e58;
+
+  /* fluid root font-size.
+     Min: 14px (small phones) | Preferred: scales with viewport | Max: 18px (desktop).
+     Using `1rem + 0.6vw` would put us at ~14.6px @ 360px, ~17.4px @ 1280px. */
+  --fs-root: clamp(14px, 0.7rem + 0.55vw, 18px);
 }
 
 /* === Reset === */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
+
+html {
+  font-size: var(--fs-root);
+  -webkit-text-size-adjust: 100%;   /* prevent iOS auto-zoom on form fields */
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
   font-family: var(--font-hand);
-  font-size: 18px;
+  font-size: 1rem;
   line-height: 1.6;
   word-break: break-word;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-img, svg { display: block; max-width: 100%; }
+img, svg { display: block; max-width: 100%; height: auto; }
 a { color: inherit; text-decoration: none; }
-
 button, input { font: inherit; }
 
 /* === Background === */
@@ -71,35 +86,29 @@ body {
   background-position: 50%;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  padding-top: 20px;
 }
 
-@media (max-width: 768px) {
-  body { padding-top: 10px; }
-}
-
-/* === Header === */
+/* === Header — fluid sizes, container query for layout === */
 .site-header {
   position: fixed;
-  top: 20px;
+  top: 0.5rem;
   left: 0;
   right: 0;
   z-index: 50;
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 1rem;
-  /* background-color removed — header is now fully transparent.
-     backdrop-filter still applies (blurs content behind it), but no
-     visible box shape. */
+  padding: 0.5rem;
   background-color: transparent;
   backdrop-filter: blur(var(--bg-overlay-blur));
   -webkit-backdrop-filter: blur(var(--bg-overlay-blur));
-  /* border-radius removed so there are no visible rounded corners.
-     mask-image fades the blur out at the bottom for a seamless blend
-     into the page below. */
   border-radius: 0;
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  /* Container query: the header responds to its OWN width, not viewport.
+     This is cleaner than viewport media queries for a fixed-size
+     component. */
+  container-type: inline-size;
+  container-name: site-header;
 }
 
 .site-header__inner {
@@ -109,18 +118,30 @@ body {
   gap: 1rem;
 }
 
+/* Stack vertically when the header is narrow. Triggered at < 30rem (~480px) own width. */
+@container site-header (max-width: 30rem) {
+  .site-header__inner {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .site-header__text { text-align: center; }
+}
+
 .site-header__photo {
-  width: 10em;
-  height: 10em;
+  /* 60px on phones, scales to 120px on desktop. Cap at 180px. */
+  width: clamp(3.75rem, 18vw, 11.25rem);
+  height: clamp(3.75rem, 18vw, 11.25rem);
+  aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.5);
+  flex: 0 0 auto;
 }
 
 .site-header__text { text-align: left; }
 
 .counter {
-  font-size: 1.5em;
+  font-size: clamp(1.125rem, 0.5rem + 1.5vw, 1.5rem);
   font-weight: 700;
   color: var(--color-text);
   margin: 0 0 0.5rem;
@@ -128,7 +149,7 @@ body {
 
 .site-header__title {
   margin: 0;
-  font-size: 1.2em;
+  font-size: clamp(0.95rem, 0.7rem + 0.6vw, 1.2rem);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -147,40 +168,39 @@ body {
 .site-header__subtitle {
   margin: 0.5rem 0 0;
   color: var(--color-text);
+  font-size: clamp(0.8rem, 0.65rem + 0.4vw, 0.9rem);
 }
 
-@media (max-width: 768px) {
-  .site-header { top: 10px; max-width: 90%; padding: 0.5rem; }
-  .site-header__inner { flex-direction: column; gap: 0.5rem; }
-  .site-header__photo { width: 4em; height: 4em; }
-  .site-header__text { text-align: center; }
-  .counter { font-size: 1.2em; }
-  .site-header__title { font-size: 1em; }
-  .site-header__subtitle { font-size: 0.9em; }
-}
-
-/* === Bucket list === */
-.bucket-list {
-  max-width: var(--container-max);
-  margin: 320px auto 2rem;
-  padding: 2rem;
-  background-color: transparent;
-  border-radius: var(--radius-md);
+/* === Page-level offset for the fixed header.
+   The header is now smaller, so the offset is smaller too. The fluid
+   min/max scales with the header's own height. */
+.page-top-offset {
+  margin-top: clamp(7rem, 28vw, 18rem);
 }
 
 @media (max-width: 1024px) {
-  body { background-size: contain; }
-  .bucket-list { padding: 1.5rem; margin: 240px auto 2rem; }
+  .page-top-offset { margin-top: clamp(6rem, 24vw, 14rem); }
 }
 
 @media (max-width: 768px) {
-  body { background-size: cover; }
-  .bucket-list { padding: 1rem; margin: 120px 1rem 2rem; max-width: none; }
+  .page-top-offset { margin-top: clamp(5rem, 20vw, 8rem); }
+}
+
+/* === Bucket list — fluid === */
+.bucket-list {
+  max-width: var(--container-max);
+  margin: 0 auto 2rem;
+  padding: clamp(0.75rem, 2.5vw, 1.5rem);
+  background-color: transparent;
+  border-radius: var(--radius-md);
+  /* Clear the fixed header */
+  padding-top: clamp(6rem, 25vw, 18rem);
 }
 
 .list-item {
   display: flex;
   align-items: center;
+  gap: 0;
   margin-bottom: 1rem;
   position: relative;
 }
@@ -196,19 +216,15 @@ body {
 }
 
 .list-item__check {
-  width: 48px;
-  height: 48px;
+  width: clamp(1.875rem, 4vw, 3rem);
+  height: clamp(1.875rem, 4vw, 3rem);
   flex: 0 0 auto;
 }
 
-.list-item__check-spacer { width: 0.75rem; flex: 0 0 auto; }
-.list-item__num-spacer { width: 1rem; flex: 0 0 auto; }
+.list-item__check-spacer { width: clamp(0.4rem, 0.5rem + 0.5vw, 0.75rem); flex: 0 0 auto; }
+.list-item__num-spacer  { width: clamp(0.5rem, 0.5rem + 0.5vw, 1rem);    flex: 0 0 auto; }
 
-/* === Scroll-driven focal effect on the bucket list ===
-   Each item's text/number animates based on its position in the viewport:
-   items near the vertical center grow + brighten; items at the edges
-   stay at a calmer off-focus state. Pure CSS — no JS, no scroll listener. */
-
+/* Scroll-driven focal effect — unchanged logic, just fluid sizes. */
 @keyframes list-focus {
   0%, 100% {
     transform: scale(1);
@@ -222,17 +238,9 @@ body {
   }
 }
 
-.list-item:not(.is-checked) .list-item__num {
-  font-size: 1.7rem;
-  color: var(--color-text);
-  transform-origin: left center;
-  animation: list-focus linear both;
-  animation-timeline: view();
-  animation-range: cover;
-}
-
+.list-item:not(.is-checked) .list-item__num,
 .list-item:not(.is-checked) .list-item__text {
-  font-size: 1.5rem;
+  font-size: clamp(0.875rem, 0.5rem + 1.2vw, 1.5rem);
   line-height: 1.5;
   color: var(--color-text);
   transform-origin: left center;
@@ -241,98 +249,57 @@ body {
   animation-range: cover;
 }
 
-.list-item__text:hover {
-  color: var(--color-text-hover);
-}
+.list-item__num { font-size: clamp(0.95rem, 0.5rem + 1.4vw, 1.7rem); }
 
-@media (max-width: 1024px) {
-  .list-item__check { width: 40px; height: 40px; }
-  .list-item__check-spacer { width: 0.5rem; }
-  .list-item__num, .list-item__text { font-size: 1.5rem; }
-  .list-item__num-spacer { width: 0.75rem; }
-  .list-item.is-checked .list-item__num { font-size: 1.6rem; }
-  .list-item.is-checked .list-item__text { font-size: 1.45rem; }
-}
-
-@media (max-width: 768px) {
-  .list-item__check { width: 30px; height: 30px; }
-  .list-item__check-spacer { width: 0.4rem; }
-  .list-item__num, .list-item__text { font-size: 1.1rem; }
-  .list-item__num-spacer { width: 0.5rem; }
-  .list-item.is-checked .list-item__num { font-size: 1.25rem; }
-  .list-item.is-checked .list-item__text { font-size: 1.15rem; }
-}
-
-.list-item.is-checked .list-item__num,
-.list-item.is-checked .list-item__text {
-  position: relative;
-  /* Bump font-size so checked items look proportionally "normal"
-     when neighbouring unchecked items grow in the focal zoom. */
-  font-size: 1.8rem;
-}
-.list-item.is-checked .list-item__text { font-size: 1.6rem; }
-
-.list-item.is-checked .list-item__num::after,
-.list-item.is-checked .list-item__text::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  height: 2px;
-  background-color: var(--color-text);
-  transform: translateY(-50%) rotate(-5deg);
-  opacity: 0.6;
-}
+.list-item__text:hover { color: var(--color-text-hover); }
 
 /* === Long-form content pages (100-reasons-why, comment, etc.) === */
 .page {
   max-width: var(--container-max);
-  margin: 320px auto 2rem;
-  padding: 0 1.5rem;
+  margin: 0 auto 2rem;
+  padding: 0 clamp(1rem, 4vw, 1.5rem);
+  /* Page-top offset for the fixed header. Fluid: 5rem on phones,
+     ~7rem on tablets, 18rem on desktop. */
+  padding-top: clamp(7rem, 28vw, 18rem);
 }
 
 @media (max-width: 1024px) {
-  .page { margin-top: 240px; }
+  .page { padding-top: clamp(6rem, 24vw, 14rem); }
 }
 
 @media (max-width: 768px) {
-  .page { margin-top: 120px; }
+  .page { padding-top: clamp(5rem, 20vw, 8rem); }
 }
 
 .page__title {
   font-family: var(--font-display);
   color: var(--color-text);
   text-align: center;
-  font-size: 1.8em;
+  font-size: clamp(1.5rem, 0.8rem + 1.8vw, 1.8rem);
   margin: 0 0 1.5rem;
+  line-height: 1.3;
 }
 
 .content-text {
   font-family: var(--font-display);
-  font-size: 1.4rem;
-  line-height: 2;
+  font-size: clamp(1rem, 0.7rem + 0.9vw, 1.4rem);
+  line-height: clamp(1.6, 0.7rem + 1.5vw, 2);
   color: var(--color-text);
-  padding-top: 50px;
   margin-bottom: 3rem;
 }
 
-/* Wenwrite — only for the long-form prose on /100-reasons-why/.
-   Subsetted to just the 244 codepoints used in that page (82 KB woff2). */
+/* Wenwrite — only for the long-form prose on /100-reasons-why/. */
 .content-text--wenwrite {
   font-family: var(--font-prose);
-  font-size: 1.35rem;
-  line-height: 2.1;
 }
 
-.content-text--form {
-  font-family: var(--font-form);
-}
+.content-text--form { font-family: var(--font-form); }
 
 .content-text p { margin: 0 0 1em; }
 .content-text a {
   color: var(--color-text-hover);
   transition: opacity 0.2s ease;
+  word-break: break-word;
 }
 
 .content-text a:hover,
@@ -341,14 +308,11 @@ body {
   outline: none;
 }
 
-@media (max-width: 768px) { .content-text { font-size: 1.1rem; line-height: 1.6; } }
-@media (max-width: 480px) { .content-text { font-size: 1rem; } }
-
 .page__subtitle {
   font-family: var(--font-form);
   color: var(--color-text);
   text-align: center;
-  font-size: 1.4em;
+  font-size: clamp(1.1rem, 0.8rem + 0.6vw, 1.4rem);
   margin: 3rem 0 1.5rem;
 }
 
@@ -356,9 +320,10 @@ body {
 .blessing-form {
   max-width: 560px;
   margin: 2rem auto;
-  padding: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
@@ -368,6 +333,7 @@ body {
   color: var(--color-text);
   text-align: center;
   font-family: var(--font-form);
+  font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1rem);
 }
 
 .blessing-form__honeypot {
@@ -386,7 +352,7 @@ body {
 .blessing-form__label {
   display: block;
   margin-bottom: 0.25rem;
-  font-size: 0.9em;
+  font-size: clamp(0.85rem, 0.8rem + 0.2vw, 0.9rem);
   color: var(--color-text);
   font-weight: 600;
   font-family: var(--font-form);
@@ -418,7 +384,7 @@ body {
   padding: 0.75rem;
   margin-top: 0.5rem;
   font-family: var(--font-form);
-  font-size: 1.05rem;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.05rem);
   color: white;
   background: var(--color-text);
   border: none;
@@ -435,7 +401,7 @@ body {
   margin: 0.75rem 0 0;
   text-align: center;
   color: var(--color-text);
-  font-size: 0.95em;
+  font-size: clamp(0.85rem, 0.8rem + 0.2vw, 0.95rem);
   font-family: var(--font-form);
 }
 
@@ -449,6 +415,7 @@ body {
   text-align: center;
   color: var(--color-text);
   font-family: var(--font-form);
+  font-size: clamp(0.85rem, 0.8rem + 0.2vw, 0.95rem);
 }
 
 .blessing-form__warning code {
@@ -481,7 +448,7 @@ body {
 }
 
 .blessing {
-  padding: 1.25rem 1.5rem;
+  padding: clamp(1rem, 2.5vw, 1.25rem) clamp(1.25rem, 3vw, 1.5rem);
   background: rgba(255, 255, 255, 0.55);
   border-left: 3px solid var(--color-text-hover);
   border-radius: 8px;
@@ -490,17 +457,20 @@ body {
 .blessing__message {
   margin: 0 0 0.5rem;
   font-family: var(--font-form);
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
   line-height: 1.6;
   color: var(--color-text);
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .blessing__meta {
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: space-between;
-  font-size: 0.9em;
+  font-size: clamp(0.8rem, 0.75rem + 0.2vw, 0.9rem);
   color: var(--color-text);
   opacity: 0.8;
   font-family: var(--font-form);
@@ -511,16 +481,8 @@ body {
 /* === Gallery === */
 .gallery {
   max-width: 1100px;
-  margin: 320px auto 2rem;
+  margin: 0 auto 2rem;
   padding: 1rem;
-}
-
-@media (max-width: 1024px) {
-  .gallery { margin-top: 240px; }
-}
-
-@media (max-width: 768px) {
-  .gallery { margin-top: 140px; }
 }
 
 .gallery__list {
@@ -528,12 +490,9 @@ body {
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-@media (max-width: 768px) {
-  .gallery__list { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; }
+  /* Fluid column widths: 140px on phones, 220px on desktop. */
+  grid-template-columns: repeat(auto-fill, minmax(clamp(8.75rem, 20vw, 13.75rem), 1fr));
+  gap: clamp(0.5rem, 1.5vw, 1rem);
 }
 
 .gallery__item {
@@ -573,7 +532,7 @@ body {
   align-items: baseline;
   padding: 0 0.25rem;
   font-family: var(--font-hand);
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 0.7rem + 0.3vw, 0.9rem);
   line-height: 1.4;
   color: var(--color-text);
   opacity: 0.85;
@@ -628,7 +587,7 @@ dialog.lightbox img {
   font-size: 1rem;
   line-height: 1.5;
   text-align: center;
-  max-width: 720px;
+  max-width: min(720px, 96vw);
   padding: 0 1rem;
   color: rgba(255, 255, 255, 0.92);
 }
@@ -657,27 +616,27 @@ dialog.lightbox img {
 }
 
 .lightbox__close {
-  top: 1rem;
-  right: 1.5rem;
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 1.5rem;
+  top: 0.5rem;
+  right: 0.75rem;
+  width: clamp(2.5rem, 4vw, 2.75rem);
+  height: clamp(2.5rem, 4vw, 2.75rem);
+  font-size: clamp(1.25rem, 1rem + 0.5vw, 1.5rem);
   line-height: 1;
 }
 
 .lightbox__nav {
   top: 50%;
   transform: translateY(-50%);
-  width: 3.5rem;
-  height: 3.5rem;
-  font-size: 2.5rem;
+  width: clamp(2.5rem, 4vw, 3.5rem);
+  height: clamp(2.5rem, 4vw, 3.5rem);
+  font-size: clamp(1.75rem, 1.25rem + 0.5vw, 2.5rem);
   line-height: 1;
   display: grid;
   place-items: center;
 }
 
-.lightbox__nav--prev { left: 1rem; }
-.lightbox__nav--next { right: 1rem; }
+.lightbox__nav--prev { left: 0.5rem; }
+.lightbox__nav--next { right: 0.5rem; }
 
 .lightbox__close:hover,
 .lightbox__nav:hover { background: rgba(0, 0, 0, 0.8); }
@@ -702,7 +661,8 @@ dialog.lightbox img {
   padding: 1.5rem 1rem;
   text-align: center;
   color: var(--color-footer);
-  font-size: 18px;
+  font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1.125rem);
+  line-height: 1.6;
 }
 
 .site-footer a {
@@ -719,10 +679,10 @@ dialog.lightbox img {
 /* === Back to top === */
 .to-top {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  bottom: clamp(0.75rem, 2vw, 1.5rem);
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  width: clamp(2.25rem, 4vw, 2.5rem);
+  height: clamp(2.25rem, 4vw, 2.5rem);
   display: grid;
   place-items: center;
   background: var(--color-text);
@@ -734,9 +694,20 @@ dialog.lightbox img {
   pointer-events: none;
   transition: opacity 0.3s ease;
   text-decoration: none;
+  z-index: 60;
 }
 
 .to-top.is-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* === Accessibility: respect reduced-motion preference === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
