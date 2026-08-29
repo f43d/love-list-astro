@@ -7,7 +7,10 @@
  *   checked : "true" or "false"
  *   text    : the item's full text
  *   link    : external URL (or empty for self-anchor)
- *   photo   : gallery photo id this item links to (or empty)
+ *   photo   : gallery photo id (optional; empty if not linked)
+ *
+ * The 5th column (photo) was added later. Old rows with only 4 columns
+ * still parse correctly because parseLine merges any extra fields.
  *
  * Server-side only. Used by Astro components.
  * ========================================================================== */
@@ -19,19 +22,21 @@ let cache: BucketItem[] | null = null;
 
 export function loadList(): BucketItem[] {
   if (cache) return cache;
-  cache = parseLines<BucketItem>(readCached('list.env'), 5, (f) => {
+  cache = parseLines<BucketItem>(readCached('list.env'), 4, (f) => {
     const id = Number.parseInt(f[0], 10);
     if (!Number.isFinite(id)) {
-      // Skip lines with non-numeric id (shouldn't happen in well-formed data).
       throw new Error(`Invalid bucket-list line: ${f.join('|')}`);
     }
     return {
       num: f[0].padStart(2, '0'),
       id,
-      text: f[2],
       checked: f[1].toLowerCase() === 'true',
+      text: f[2],
       link: f[3],
-      photo: f[4],
+      // f[4] is the optional photo id (5th column). If absent (older rows
+      // with only 4 columns), parseLine returns just 4 fields and this
+      // is undefined → treat as empty.
+      photo: f[4] ?? '',
     };
   });
   return cache;

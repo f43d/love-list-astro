@@ -31,6 +31,11 @@ export function readDataFile(file: string): string {
  * Parse a single line into the fields it declares. Pipe characters inside
  * the LAST field are preserved (joined back with '|') — useful for text
  * fields that may contain the separator (e.g. blessing messages).
+ *
+ * `fieldCount` is the *required* number of fields. Lines with fewer
+ * fields are skipped (return null). Extra fields are merged into the
+ * last required one, separated by '|'. This is how the bucket list
+ * grew a 5th "photo" column without rewriting all 92 existing rows.
  */
 export function parseLine(
   line: string,
@@ -38,8 +43,11 @@ export function parseLine(
 ): string[] | null {
   const parts = line.split('|');
   if (parts.length < fieldCount) return null;
-  // For the first (fieldCount - 1) fields, no joining. The rest is joined.
+  // Required fields get individually trimmed.
   const head = parts.slice(0, fieldCount - 1).map((p) => p.trim());
+  // Any extra fields beyond fieldCount are merged into the last required
+  // one. This is how we extended list.env to include an optional 5th
+  // "photo" column without rewriting all 92 existing rows.
   const tail = parts.slice(fieldCount - 1).join('|').trim();
   return [...head, tail];
 }
