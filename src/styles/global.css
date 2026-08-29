@@ -262,7 +262,16 @@ body {
 }
 
 .content-text p { margin: 0 0 1em; }
-.content-text a { text-decoration: underline; text-underline-offset: 3px; }
+.content-text a {
+  color: var(--color-text-hover);
+  transition: opacity 0.2s ease;
+}
+
+.content-text a:hover,
+.content-text a:focus-visible {
+  opacity: 0.65;
+  outline: none;
+}
 
 @media (max-width: 768px) { .content-text { font-size: 1.1rem; line-height: 1.6; } }
 @media (max-width: 480px) { .content-text { font-size: 1rem; } }
@@ -501,7 +510,16 @@ dialog.lightbox .close {
   font-size: 18px;
 }
 
-.site-footer a { text-decoration: underline; }
+.site-footer a {
+  color: var(--color-text-hover);
+  transition: opacity 0.2s ease;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  opacity: 0.65;
+  outline: none;
+}
 
 /* === Back to top === */
 .to-top {
