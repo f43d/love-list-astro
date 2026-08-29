@@ -318,16 +318,28 @@ body {
   .bucket-list,
   .page,
   .gallery {
-    /* Bigger header → bigger offset so the hero photo + text clear the
-       content below. */
-    padding-top: clamp(20rem, 42vh, 28rem);
+    /* Big header (photo + 3 text lines) → ~350px tall + ~100px blur-fade.
+       Need ~450px+ of padding-top to clear the 3rd line. */
+    padding-top: clamp(24rem, 52vh, 32rem);
   }
   .site-header__photo {
-    /* Hero-size circle: ~60% of the phone width, capped at 260px. */
-    width: min(60vw, 260px);
-    height: min(60vw, 260px);
+    /* Hero-size circle: ~50% of the phone width, capped at 220px. */
+    width: min(50vw, 220px);
+    height: min(50vw, 220px);
   }
-  .site-header__title { margin-top: 0.5rem; }
+  /* Bump the three text lines 10-20% bigger than the default scale. */
+  .counter {
+    font-size: clamp(1.25rem, 0.7rem + 1.6vw, 1.7rem);
+    margin-bottom: 0.35rem;
+  }
+  .site-header__title {
+    font-size: clamp(1.1rem, 0.8rem + 0.7vw, 1.35rem);
+    margin-top: 0.35rem;
+  }
+  .site-header__subtitle {
+    font-size: clamp(0.9rem, 0.7rem + 0.5vw, 1.05rem);
+    margin-top: 0.3rem;
+  }
 }
 
 .page__title {
