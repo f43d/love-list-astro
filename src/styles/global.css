@@ -171,6 +171,46 @@ body {
   font-size: clamp(0.8rem, 0.65rem + 0.4vw, 0.9rem);
 }
 
+/* === Compact header for short viewports (e.g. iPhone landscape).
+   The fluid clamp() above gives us 167px photos on a 932×430 landscape
+   iPhone, which is 39% of the viewport height — far too much. This
+   rule keeps the photo and text small when vertical space is tight,
+   so the bucket list and pages can clear the header. */
+@media (max-height: 500px) {
+  .site-header {
+    padding: 0.4rem 0.6rem;
+  }
+  .site-header__photo {
+    width: clamp(2.75rem, 8vh, 3.75rem);
+    height: clamp(2.75rem, 8vh, 3.75rem);
+  }
+  .site-header__inner { gap: 0.5rem; }
+
+  .counter {
+    font-size: 0.95rem;
+    margin: 0 0 0.2rem;
+  }
+  .site-header__title { font-size: 0.85rem; }
+  .site-header__subtitle {
+    font-size: 0.75rem;
+    margin: 0.2rem 0 0;
+  }
+}
+
+/* === Bucket list / page top padding in short viewports.
+   Keeps the fixed header + its bottom blur-fade clear of the content. */
+@media (max-height: 500px) {
+  .bucket-list {
+    padding-top: clamp(4.5rem, 60vh, 11rem);
+  }
+  .page {
+    padding-top: clamp(4.5rem, 60vh, 11rem);
+  }
+  .gallery {
+    padding-top: clamp(4.5rem, 60vh, 11rem);
+  }
+}
+
 /* === Page-level offset for the fixed header.
    The header is now smaller, so the offset is smaller too. The fluid
    min/max scales with the header's own height. */
