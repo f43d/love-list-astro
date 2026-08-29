@@ -244,3 +244,18 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - A future font with broader coverage (or font subsetting) could
     swap 泪 back to 淚 in one place.
 - **Cost to revisit**: only if a future font has 淚 and not 泪 (unlikely).
+
+## 2026-08-29 — Schema migration in pipe-separated env files is forward-compatible by design
+
+- **Decision**: the `parseLine` helper in `src/lib/parseEnv.ts` treats `fieldCount` as the *required* number of fields. Lines with more fields are accepted, with extras merged into the last required field. Lines with fewer fields are dropped (return `null`).
+- **Context**: when the bucket list grew a 5th column (`photo` id) earlier in the session, only 3 of the 92 rows in `data/list.env` were updated. The 89 un-updated rows had only 4 columns. If `parseLine` had required an exact match, all 89 rows would have failed to parse and the home page would have dropped to 3 items.
+- **Why this matters**: the shared `parseLines()` helper in `src/lib/parseEnv.ts` was written specifically to allow additive schema changes without retroactive data-file edits. New fields can be appended; old rows with fewer columns still parse (the missing trailing field is `undefined` in the builder, which the caller treats as empty).
+- **Rejected**:
+  - **Strict field count** — would have broken the bucket list. Rejected.
+  - **Migrate the data file in one go** — 89 rows × at least 2 lines per row = lots of churn. Rejected.
+- **Consequence**:
+  - Future schema additions (e.g. adding `date` to bucket items) need only an edit to `parseList.ts` and a header comment in `data/list.env`. Old rows keep working.
+  - Each data file is now ~30 lines instead of ~50 because `parseLines()` replaces the per-file boilerplate.
+  - The `serializeGallery` / `serializeList` helpers in `settingsClient.ts` are NOT forward-compatible by design (they always emit the full schema). If a row in `gallery.env` is added with an extra column, it'll round-trip fine via the parser, but writing it back will collapse the extras into the last field. This is acceptable for the current use case (the /settings/ page only edits known fields).
+- **Cost to revisit**: if multi-row data migrations become common, consider versioning the format (e.g. `## v1.0` header comment in the env file) and teaching the parser to migrate older versions on read.
+- **Captured by**: the post-end-of-day regression where 89 bucket list items silently disappeared because the field count was bumped to 5 in the refactor without a corresponding data-file migration. Fixed in commit `47210fa`.
