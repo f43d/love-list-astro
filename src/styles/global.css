@@ -171,29 +171,27 @@ body {
   font-size: clamp(0.8rem, 0.65rem + 0.4vw, 0.9rem);
 }
 
-/* === Compact header for short viewports (e.g. iPhone landscape).
-   The fluid clamp() above gives us 167px photos on a 932×430 landscape
-   iPhone, which is 39% of the viewport height — far too much. This
-   rule keeps the photo and text small when vertical space is tight,
-   so the bucket list and pages can clear the header. */
+/* === Short viewports (e.g. iPhone landscape): keep the header compact
+   but still give the photo some presence. Vertical space is tight, so
+   don't grow the photo too much — but bigger than before. */
 @media (max-height: 500px) {
   .site-header {
-    padding: 0.4rem 0.6rem;
+    padding: 0.75rem 1rem;
   }
   .site-header__photo {
-    width: clamp(2.75rem, 8vh, 3.75rem);
-    height: clamp(2.75rem, 8vh, 3.75rem);
+    width: clamp(4rem, 15vh, 6rem);
+    height: clamp(4rem, 15vh, 6rem);
   }
-  .site-header__inner { gap: 0.5rem; }
+  .site-header__inner { gap: 0.75rem; }
 
   .counter {
-    font-size: 0.95rem;
-    margin: 0 0 0.2rem;
+    font-size: 1.1rem;
+    margin: 0 0 0.3rem;
   }
-  .site-header__title { font-size: 0.85rem; }
+  .site-header__title { font-size: 1rem; }
   .site-header__subtitle {
-    font-size: 0.75rem;
-    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    margin: 0.3rem 0 0;
   }
 }
 
@@ -320,16 +318,16 @@ body {
   .bucket-list,
   .page,
   .gallery {
-    padding-top: clamp(15rem, 30vh, 22rem);
+    /* Bigger header → bigger offset so the hero photo + text clear the
+       content below. */
+    padding-top: clamp(20rem, 42vh, 28rem);
   }
   .site-header__photo {
-    width: clamp(2.5rem, 11vw, 3.5rem);
-    height: clamp(2.5rem, 11vw, 3.5rem);
+    /* Hero-size circle: ~60% of the phone width, capped at 260px. */
+    width: min(60vw, 260px);
+    height: min(60vw, 260px);
   }
-  /* Hide the subtitle in portrait — it's the least informative line
-     and saves ~25px of vertical space. */
-  .site-header__subtitle { display: none; }
-  .site-header__title { margin-top: 0.25rem; }
+  .site-header__title { margin-top: 0.5rem; }
 }
 
 .page__title {
