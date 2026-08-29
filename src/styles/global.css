@@ -187,17 +187,41 @@ body {
 .list-item__check-spacer { width: 0.75rem; flex: 0 0 auto; }
 .list-item__num-spacer { width: 1rem; flex: 0 0 auto; }
 
-.list-item__num {
-  font-size: 1.7rem;
-  color: var(--color-text);
-  transition: color 0.3s ease;
+/* === Scroll-driven focal effect on the bucket list ===
+   Each item's text/number animates based on its position in the viewport:
+   items near the vertical center grow + brighten; items at the edges
+   stay at a calmer off-focus state. Pure CSS — no JS, no scroll listener. */
+
+@keyframes list-focus {
+  0%, 100% {
+    transform: scale(1);
+    color: var(--color-text);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.25);
+    color: var(--color-text-hover);
+    opacity: 1;
+  }
 }
 
-.list-item__text {
+.list-item:not(.is-checked) .list-item__num {
+  font-size: 1.7rem;
+  color: var(--color-text);
+  transform-origin: left center;
+  animation: list-focus linear both;
+  animation-timeline: view();
+  animation-range: cover;
+}
+
+.list-item:not(.is-checked) .list-item__text {
   font-size: 1.5rem;
   line-height: 1.5;
   color: var(--color-text);
-  transition: color 0.3s ease;
+  transform-origin: left center;
+  animation: list-focus linear both;
+  animation-timeline: view();
+  animation-range: cover;
 }
 
 .list-item__text:hover {
