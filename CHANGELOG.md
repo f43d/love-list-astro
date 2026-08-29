@@ -4,37 +4,68 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
-## 2026-08-29 — Blessing form live, focal zoom, performance
+## 2026-08-29 — Responsive design overhaul + wenwrite font
 
 ### Added
 
-- Blessing form at `/comment/` now accepts real submissions (Web3Forms).
-- Bucket list: scroll-driven focal zoom — items near the centre of the
-  viewport grow and turn a darker coral as you scroll.
-- Noto Sans HK for all visitor-facing content on `/comment/` (form,
-  wall, intro paragraphs).
+- **Wenwrite Proportional** font on `/100-reasons-why/` body prose. Subsetted
+  to 82 KB woff2 covering only the 244 codepoints used in the body.
+- Responsive design rewrite using `clamp()` for fluid type/spacing,
+  `@container` queries on the header, and a portrait-specific
+  `@media` rule that bumps padding for the hero photo + 3-line text
+  block.
 
 ### Changed
 
-- Header link to /100-reasons-why/: underline → palette accent colour.
-- All links site-wide: underline → palette accent, opacity 0.65 on hover.
-- Footer: line order (祝福我們 ❤️ on top, copyright joined with 抄橋必屌).
-- Header text fixed: `24年前` (was `24前`); trailing `。` removed.
+- Header layout now responds to the actual header width (not the
+  viewport) via `@container (max-width: 30rem)` for the column-stack
+  trigger.
+- Header photo / counter / title / subtitle sizes all use `clamp()` —
+  scale fluidly with viewport on both iPhone and desktop.
+- Landscape header grown ~70% (from 41px photo + cramped text to
+  86px photo + roomy text). Portrait header is a real hero element
+  (~50vw photo with 3 stacked text lines below).
+- Bucket list / page / gallery top-padding is now `clamp(20–30rem,
+  vh, 28–40rem)` depending on orientation, so the fixed header + its
+  bottom blur-fade always clear the content.
+- All site links removed `text-decoration: underline` — they use
+  `color: var(--color-text-hover)` (coral) with `opacity: 0.65` on
+  hover/focus instead.
+- Header border removed — `background-color: transparent`,
+  `border-radius: 0`, plus a `mask-image` gradient that fades the
+  blur at the bottom for a seamless blend into the page.
+- "100-reasons-why" link in header now reads "是笑與**泪**的同行"
+  (泪 = Simplified, since DC-CST is missing both 淚/涙).
 
 ### Fixed
 
-- Inherited typos: 籍口 → 藉口 ×3, 牆 → 留言板, single → double em-dash in Chinese contexts, button font switched from awkwardblack to body
-  font for full glyph coverage.
-- Layout: `/100-reasons-why/` and `/comment/` top margin added so content
-  clears the fixed header.
-- Performance: dropped `.woff` font fallbacks (~2.7 MB); dropped unused
-  weight 500 from Noto Sans HK (~1.5 MB).
+- **"牆" → 留言板**: "牆" missing from DC-CST, used a different word
+  instead in the blessing form warning copy.
+- **Header on /100-reasons-why/**: a CSS source-order bug had the
+  `padding-top: clamp(6rem, 24vw, 14rem)` rule (1024px block) winning
+  over the portrait `clamp(15rem, 30vh, 22rem)` rule on iPhone
+  portrait. Reordered so the portrait rule is last.
+- **Header on .page was blocking the title** on iPhone portrait — fixed
+  by adding more headroom in the portrait @media rule.
+- **Page-top margin on /comment/ and /100-reasons-why/** was too small
+  — added `.page { padding-top: clamp(7rem, 28vw, 18rem) }` and bumped
+  it under the portrait @media.
+
+### Code quality
+
+- Shared `src/lib/types.ts` for `BucketItem` / `GalleryItem` / `Blessing`.
+- Shared `src/lib/parseEnv.ts` for the generic pipe-separated env parser
+  + cached file reader.
+- Shared `src/lib/utils.ts` for `pickRandomInt`, `formatBytes`,
+  `escapeHtml`.
+- `parseList.ts` / `parseGallery.ts` / `parseBlessings.ts` slimmed to
+  ~30 lines each, using the shared parser.
+- `settingsClient.ts` consolidated the two PUT paths into a single
+  `putFileAtPath` helper.
 
 ---
 
 ## 2026-08-28 — Astro rewrite, comment system swap
-
-Brand new site, brand new stack.
 
 ### Added
 
@@ -66,25 +97,3 @@ Brand new site, brand new stack.
 - The original Hugo repo `f43d/papermod-lovelist4` is left untouched as historical reference.
 - 92 bucket items transferred 1:1 (same `id`, `text`, `checked` state).
 - The three items already checked (`id` 14, 28, 43) currently still have `link: https://example.com` — set real photo URLs in `data/list.env` to make them clickable.
-
-## 2026-08-29 — Settings page, glyph fix, header redesign
-
-### Added
-
-- Hidden `/settings/` page for owner-only photo management. Auth via
-  GitHub PAT (sessionStorage). Upload, edit, delete photos and link
-  them to bucket list items. Commits via GitHub Contents API trigger
-  the existing deploy.
-
-### Fixed
-
-- 淚 / 涙 missing from DC-CST — replaced with 泪 (Simplified Chinese)
-  across header, 100-reasons-why link, and HISTORY.md.
-- Header box had a visible boundary — now transparent, square corners,
-  with a mask gradient to fade the blur at the bottom edge.
-
-### Changed
-
-- Lightbox caption now reads from a JSON blob rendered by Astro, not
-  from a DOM lookup. Eliminates a class of bugs where the caption
-  could get out of sync with the photo.
