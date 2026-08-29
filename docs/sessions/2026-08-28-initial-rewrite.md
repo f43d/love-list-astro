@@ -145,3 +145,50 @@ The site is feature-complete enough to pause on. Next session can be:
 - finish blessing form setup,
 - link real images for checked items, or
 - start a brand-new project with `project-scaffold` as the starting point.
+
+---
+
+# Second half (2026-08-29, morning) — design polish + blessing form activation
+
+## What was done
+
+- **Blessing form** — registered at web3forms.com, set `PUBLIC_WEB3FORMS_KEY`
+  in GitHub Variables, redeployed. Form is now live at /comment/ and accepts
+  submissions. End-to-end flow (visitor → email → GitHub Issue → published)
+  is wired and waiting for the first real submission.
+
+- **Header polish**:
+  - Fixed `24前` → `24年前` and removed trailing `。` in the site header.
+  - Replaced underline link style with palette accent (`color: var(--color-text-hover)`)
+    across header, body prose, and footer. New `--color-focal` token for
+    darker accent on focal-band items.
+  - Added `.page` top margin (320/240/120px responsive) so /100-reasons-why/
+    and /comment/ clear the fixed header on load.
+
+- **Footer restructure** — moved 祝福我們 ❤️ to top, joined "翁強用愛發電"
+  and "Astro 全力支持" on one line with `·`, replaced formal copyright
+  with "版權所有 抄橋必屌 © 2026 buc.ketli.st" (final order).
+
+- **Bucket list focal zoom** — added CSS Scroll-Driven Animations
+  (`animation-timeline: view()` + `animation-range: cover`).
+  3-4 items near the viewport center grow to 1.3× and turn darker coral;
+  edges stay calmer. Checked items keep a slightly larger font-size so
+  they don't feel dwarfed by neighbours.
+
+- **Visitor-facing font** — Google Fonts Noto Sans HK now backs the
+  blessing form, all blessing wall content, and the blessing page's intro
+  paragraphs. DC-CST missing 牆/墻 glyphs forced this. Main site
+  (header, body, prose, footer) keeps DC-CST.
+
+- **Performance** — dropped `.woff` fallbacks (kept `.woff2` only).
+  Saves ~2.7 MB. Also dropped unused 500-weight from Noto Sans HK
+  load (~1.5 MB saved on /comment/).
+
+- **Inherited typos fixed**: 籍口→藉口 ×3, 牆→留言板, single → double em-dash
+  in Chinese contexts.
+
+## Open items
+
+- Test the blessing form end-to-end with a real submission.
+- Optionally: gallery JPEG recompression (~6.8 MB savings, one-time).
+- Optionally: subset DC-CST for ~2 MB savings (build hook complexity).

@@ -129,3 +129,33 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
 - **Consequence**: any future link added to the site should inherit the same coral accent. Add to AGENTS.md so future agents don't accidentally re-introduce underlines.
 - **Cost to revisit**: if a long-form-prose context ever has accessibility constraints (low-vision users, high-contrast mode), reconsider — underlines are more discoverable than colour alone. For now, the photo-led design + DC-CST handwriting keeps the page calm and underlines would over-emphasise.
 - **Commits**: `e7d2545` (header), `5215eae` (body + footer).
+
+## 2026-08-29 — Don't subset DC-CST, optimise gallery instead
+
+- **Decision**: keep DC-CST at full 2.2 MB. Optimise gallery images (~6.8 MB savings) before considering font subsetting.
+- **Context**: asked whether subsetting DC-CST was needed when adding new list items. Subsetting would drop the font to ~200 KB but requires re-subsetting on every data change — silent failure mode if forgotten (new glyphs render as □).
+- **Rejected**:
+  - **Subset and add a build hook** that auto-detects new characters — adds ~80 LOC + a build dependency (`pyftsubset`) for marginal benefit on a private site.
+  - **Subset only the static site text, fall back to full font for variable content** — splits the source of truth into two files; confusing.
+- **Cost to revisit**: if the site moves to a CDN with image-budget concerns, or traffic spikes, revisit font subsetting with a proper build hook.
+
+## 2026-08-29 — Noto Sans HK for visitor-facing content
+
+- **Decision**: Google Fonts Noto Sans HK backs all text on /comment/ (form + wall + intro paragraphs + headings + empty state). Main site keeps DC-CST and awkwardblack.
+- **Context**: DC-CST (Taiwan handwritten font) and awkwardblack have incomplete CJK glyph coverage. Discovered when 牆 and 墻 both rendered as missing glyphs on the blessing form. Also discovered awkwardlyblack's submit button only rendered 出 — 祝福 fell back to a system font.
+- **Rejected**:
+  - **Fix the submit button to use DC-CST instead of awkwardblack** — works for the static button text, but doesn't help visitor-typed content in the message field.
+  - **Self-host a comprehensive CJK font** — adds ~3 MB to the dist, same problem solved.
+- **Consequence**: every visitor-typed character renders correctly. One Google Fonts load (~3 MB cached after first visit) per /comment/ visit.
+- **Cost to revisit**: if visitor volume grows or Google Fonts becomes a privacy concern, switch to self-hosted `noto-sans-hk` subsetted to site-used glyphs.
+
+## 2026-08-29 — Scroll-driven focal zoom on the bucket list
+
+- **Decision**: CSS Scroll-Driven Animations (`animation-timeline: view()` + `animation-range: cover`) make 3-4 items near the viewport centre grow to 1.3× and turn a darker coral as the user scrolls.
+- **Context**: original Hugo site had a flat list with all items at the same weight. Owner wanted a more "modern" feel without adding JS or scroll listeners.
+- **Rejected**:
+  - **Pure-CSS scroll-snap** — locks scrolling, terrible UX on long pages.
+  - **IntersectionObserver + JS** — adds runtime cost, requires hydration.
+  - **CSS `:has()` + scroll-driven** — too clever, no real benefit.
+- **Consequence**: pure CSS, GPU-accelerated, ~0 ms of JS. Requires Chrome 115+, Firefox 136+, Safari 18.0+ (basically universal by 2026).
+- **Cost to revisit**: if the focal zone feels too narrow on tall viewports, adjust `animation-range` to `cover 10% cover 90%`.
