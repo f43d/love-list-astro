@@ -135,3 +135,20 @@ Owner should have access to:
 - ✓ Fine-grained GitHub PAT (rotate annually)
 
 Rotate/revoke the GitHub PAT used for the initial push once no longer needed.
+
+## Settings page (owner-only)
+
+The site has a hidden `/settings/` page (no link anywhere) that lets the owner manage photos and bucket-list links via a UI instead of editing env files in the GitHub web UI.
+
+**Auth**: paste a GitHub PAT (Contents: Read+write on `love-list-astro`). Token is held in `sessionStorage` (cleared when the tab closes) — not `localStorage`, to limit exposure.
+
+**Capabilities**:
+- View, edit, delete existing photos in `data/gallery.env`
+- Upload a new photo: file picker → in-browser resize to 1600 px wide → convert to WebP (~150 KB) → commit to `public/images/gallery/NN.webp` + update env
+- Link/unlink checked bucket list items to photos
+
+**Every commit triggers the existing GitHub Actions deploy.** Changes go live ~30 s after a save.
+
+**PAT scope requirements**: Contents: Read and write on `love-list-astro` only. Token has no other scopes.
+
+**For family / future maintainers**: see `docs/PERMANENCE.md`. The `/settings/` page is for the owner — visitors don't see it.

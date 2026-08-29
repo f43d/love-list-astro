@@ -1,0 +1,745 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Settings" description="Owner-only settings for buc.ketli.st" showHeader={true}>
+  <a id="top"></a>
+  <article class="page settings-page">
+    <h1 class="page__title">Settings</h1>
+    <p class="settings-warning">
+      🔒 <strong>Owner-only.</strong> This page is hidden from public links. All edits
+      commit directly to the GitHub repo via the API. Changes go live after the
+      GitHub Action deploys (~30 s).
+    </p>
+
+    <!-- ───── 1. Connect with PAT ───── -->
+    <section id="auth-section" class="settings-section">
+      <h2>1. Connect to GitHub</h2>
+      <p>Paste a PAT with <code>Contents: Read and write</code> on <code>f43d/love-list-astro</code>.</p>
+      <div class="row">
+        <input type="password" id="pat-input" placeholder="github_pat_..." autocomplete="off" spellcheck="false" />
+        <button id="connect-btn" class="btn btn-primary">Connect</button>
+        <button id="disconnect-btn" class="btn btn-secondary" hidden>Disconnect</button>
+      </div>
+      <p id="auth-status" class="status"></p>
+    </section>
+
+    <!-- ───── 2. Photo management (hidden until connected) ───── -->
+    <section id="manage-section" class="settings-section" hidden>
+      <h2>2. Photos</h2>
+      <p>Add, edit, or remove photos. Each photo can be linked to a checked bucket list item below.</p>
+
+      <div id="photos-list" class="photo-list"></div>
+
+      <details class="add-photo">
+        <summary>➕ Add a new photo</summary>
+        <div class="add-photo__form">
+          <div class="row">
+            <label>Image file
+              <input type="file" id="new-photo-file" accept="image/*" />
+            </label>
+          </div>
+          <div id="new-photo-preview" class="preview"></div>
+          <div class="row">
+            <label>Date
+              <input type="date" id="new-photo-date" />
+            </label>
+            <label>Location
+              <input type="text" id="new-photo-location" placeholder="Tokyo" />
+            </label>
+          </div>
+          <div class="row">
+            <label class="grow">Caption
+              <input type="text" id="new-photo-caption" placeholder="Cherry blossoms in Ueno park" />
+            </label>
+          </div>
+          <div class="row">
+            <button id="add-photo-btn" class="btn btn-primary" disabled>Upload &amp; commit</button>
+            <span id="add-photo-status" class="status"></span>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ───── 3. Bucket list links (hidden until connected) ───── -->
+    <section id="links-section" class="settings-section" hidden>
+      <h2>3. Bucket list links</h2>
+      <p>Link each checked item to one photo. Visitors clicking that item will deep-link to the photo in the gallery lightbox.</p>
+      <div id="bucket-links" class="bucket-links"></div>
+    </section>
+  </article>
+</Base>
+
+<script>
+import {
+  verifyPat, setPat, getPat, clearPat,
+  getFile, putFile, putBinaryFile, deleteFile, getBinaryFileSha,
+  parseGallery, serialiseGallery, parseList, serialiseList,
+  processImage, formatBytes,
+  type GalleryItem, type BucketItem, type GithubFile,
+} from '../lib/settingsClient';
+
+// ───── State ─────
+let pat = '';
+let gallery: GalleryItem[] = [];
+let listItems: BucketItem[] = [];
+let galleryFile: GithubFile | null = null;
+let listFile: GithubFile | null = null;
+
+// ───── DOM refs ─────
+const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+
+const patInput = $<HTMLInputElement>('pat-input');
+const connectBtn = $('connect-btn');
+const disconnectBtn = $('disconnect-btn');
+const authStatus = $('auth-status');
+const manageSection = $('manage-section');
+const linksSection = $('links-section');
+const photosList = $('photos-list');
+const bucketLinks = $('bucket-links');
+
+// ───── Auth ─────
+async function tryAutoReconnect() {
+  const existing = getPat();
+  if (!existing) return;
+  patInput.value = '••••••••••••••••'; // show placeholder, don't reveal
+  pat = existing;
+  const result = await verifyPat(pat);
+  if (result.ok) {
+    onAuthenticated(result.user ?? 'unknown');
+  } else {
+    clearPat();
+    patInput.value = '';
+    setAuthStatus(`Previous token invalid: ${result.error}. Please reconnect.`, true);
+  }
+}
+
+async function connect() {
+  const entered = patInput.value.trim();
+  if (!entered) {
+    setAuthStatus('Please paste a token.', true);
+    return;
+  }
+  setAuthStatus('Verifying…');
+  const result = await verifyPat(entered);
+  if (!result.ok) {
+    setAuthStatus(`Token rejected: ${result.error}.`, true);
+    return;
+  }
+  pat = entered;
+  setPat(pat);
+  patInput.value = '••••••••••••••••';
+  onAuthenticated(result.user ?? 'unknown');
+}
+
+function disconnect() {
+  pat = '';
+  clearPat();
+  patInput.value = '';
+  setAuthStatus('Disconnected.');
+  connectBtn.hidden = false;
+  disconnectBtn.hidden = true;
+  manageSection.hidden = true;
+  linksSection.hidden = true;
+}
+
+function onAuthenticated(user: string) {
+  setAuthStatus(`Connected as ${user}.`);
+  connectBtn.hidden = true;
+  disconnectBtn.hidden = false;
+  manageSection.hidden = false;
+  linksSection.hidden = false;
+  loadAll().catch((e) => setAuthStatus(`Load failed: ${e}`, true));
+}
+
+function setAuthStatus(msg: string, isError = false) {
+  authStatus.textContent = msg;
+  authStatus.className = `status ${isError ? 'status-error' : 'status-ok'}`;
+}
+
+connectBtn.addEventListener('click', connect);
+disconnectBtn.addEventListener('click', disconnect);
+patInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') connect();
+});
+
+// ───── Load all data ─────
+async function loadAll() {
+  await Promise.all([loadGallery(), loadList()]);
+  renderPhotos();
+  renderBucketLinks();
+}
+
+async function loadGallery() {
+  const file = await getFile('data/gallery.env', pat);
+  if (!file) throw new Error('Could not read data/gallery.env');
+  galleryFile = file;
+  gallery = parseGallery(file.content);
+}
+
+async function loadList() {
+  const file = await getFile('data/list.env', pat);
+  if (!file) throw new Error('Could not read data/list.env');
+  listFile = file;
+  listItems = parseList(file.content);
+}
+
+// ───── Render photos ─────
+function renderPhotos() {
+  photosList.innerHTML = '';
+  for (const p of gallery) {
+    const row = document.createElement('div');
+    row.className = 'photo-row';
+    row.dataset.num = p.num;
+    row.innerHTML = `
+      <img class="photo-thumb" src="${escapeAttr(p.url)}" alt="" loading="lazy" />
+      <div class="photo-fields">
+        <div class="row">
+          <label>ID
+            <input type="text" class="p-num" value="${escapeAttr(p.num)}" readonly />
+          </label>
+          <label>Date
+            <input type="date" class="p-date" value="${escapeAttr(p.date)}" />
+          </label>
+        </div>
+        <label class="grow">Location
+          <input type="text" class="p-loc" value="${escapeAttr(p.location)}" />
+        </label>
+        <label class="grow">Caption
+          <input type="text" class="p-cap" value="${escapeAttr(p.caption)}" />
+        </label>
+        <label class="grow url">URL
+          <input type="text" class="p-url" value="${escapeAttr(p.url)}" />
+        </label>
+        <div class="row actions">
+          <button class="btn btn-primary p-save">Save metadata</button>
+          <button class="btn btn-danger p-delete">Delete photo</button>
+          <span class="status p-status"></span>
+        </div>
+      </div>
+    `;
+    photosList.appendChild(row);
+
+    row.querySelector('.p-save')!.addEventListener('click', () => savePhoto(p.num));
+    row.querySelector('.p-delete')!.addEventListener('click', () => deletePhoto(p.num));
+  }
+}
+
+async function savePhoto(num: string) {
+  const row = photosList.querySelector<HTMLElement>(`.photo-row[data-num="${num}"]`)!;
+  const newDate = row.querySelector<HTMLInputElement>('.p-date')!.value;
+  const newLoc = row.querySelector<HTMLInputElement>('.p-loc')!.value;
+  const newCap = row.querySelector<HTMLInputElement>('.p-cap')!.value;
+  const newUrl = row.querySelector<HTMLInputElement>('.p-url')!.value;
+  const status = row.querySelector<HTMLElement>('.p-status')!;
+
+  const item = gallery.find((g) => g.num === num);
+  if (!item) return;
+  item.date = newDate;
+  item.location = newLoc;
+  item.caption = newCap;
+  item.url = newUrl;
+
+  status.textContent = 'Saving…';
+  status.className = 'status';
+  try {
+    const content = serialiseGallery(gallery, galleryFile ? extractHeader(galleryFile.content) : '');
+    const newSha = await putFile(
+      'data/gallery.env',
+      content,
+      galleryFile!.sha,
+      `gallery: update metadata for photo ${num}`,
+      pat,
+    );
+    galleryFile = { path: 'data/gallery.env', content, sha: newSha };
+    status.textContent = '✓ Saved';
+    status.className = 'status status-ok';
+    renderBucketLinks(); // refresh photo dropdowns in case locations changed
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+async function deletePhoto(num: string) {
+  const item = gallery.find((g) => g.num === num);
+  if (!item) return;
+  if (!confirm(`Delete photo ${num} (${item.caption || item.location})?\n\nThis also unlinks it from any bucket item.`)) return;
+
+  // Unlink from any bucket item
+  let listChanged = false;
+  for (const li of listItems) {
+    if (li.photo === num) {
+      li.photo = '';
+      listChanged = true;
+    }
+  }
+
+  const status = photosList.querySelector<HTMLElement>(`.photo-row[data-num="${num}"] .p-status`)!;
+  status.textContent = 'Deleting…';
+  try {
+    // Delete the image file (if it's in the repo)
+    if (item.url.startsWith('/')) {
+      const imagePath = `public${item.url}`;
+      try {
+        const sha = await getBinaryFileSha(imagePath, pat);
+        if (sha) await deleteFile(imagePath, sha, `gallery: remove photo ${num}`, pat);
+      } catch (e) {
+        // image may not exist; that's OK
+      }
+    }
+    // Update gallery.env
+    gallery = gallery.filter((g) => g.num !== num);
+    const newContent = serialiseGallery(gallery, galleryFile ? extractHeader(galleryFile.content) : '');
+    galleryFile = await getFile('data/gallery.env', pat); // refresh sha
+    const newSha = await putFile(
+      'data/gallery.env',
+      newContent,
+      galleryFile!.sha,
+      `gallery: remove photo ${num}`,
+      pat,
+    );
+    galleryFile = { path: 'data/gallery.env', content: newContent, sha: newSha };
+    // Update list.env if needed
+    if (listChanged) {
+      listFile = await getFile('data/list.env', pat);
+      const listContent = serialiseList(listItems);
+      const listSha = await putFile('data/list.env', listContent, listFile!.sha, `list: unlink photo ${num}`, pat);
+      listFile = { path: 'data/list.env', content: listContent, sha: listSha };
+    }
+    status.textContent = '✓ Deleted';
+    renderPhotos();
+    renderBucketLinks();
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+  }
+}
+
+// ───── Add new photo ─────
+const newPhotoFile = $<HTMLInputElement>('new-photo-file');
+const newPhotoDate = $<HTMLInputElement>('new-photo-date');
+const newPhotoLocation = $<HTMLInputElement>('new-photo-location');
+const newPhotoCaption = $<HTMLInputElement>('new-photo-caption');
+const newPhotoPreview = $('new-photo-preview');
+const addPhotoBtn = $('add-photo-btn') as HTMLButtonElement;
+const addPhotoStatus = $('add-photo-status');
+
+let processedImage: { blob: Blob; width: number; height: number; base64: string } | null = null;
+
+newPhotoFile.addEventListener('change', async () => {
+  const file = newPhotoFile.files?.[0];
+  if (!file) return;
+  addPhotoStatus.textContent = 'Processing…';
+  try {
+    processedImage = await processImage(file);
+    const sizeKB = formatBytes(processedImage.blob.size);
+    newPhotoPreview.innerHTML = `
+      <div class="preview__info">
+        ✓ ${processedImage.width}×${processedImage.height}px · ${sizeKB} · WebP
+      </div>
+      <img class="preview__img" alt="Preview" />
+    `;
+    (newPhotoPreview.querySelector('.preview__img') as HTMLImageElement).src =
+      URL.createObjectURL(processedImage.blob);
+    addPhotoBtn.disabled = false;
+    addPhotoStatus.textContent = '';
+    // Default date to today
+    if (!newPhotoDate.value) {
+      newPhotoDate.value = new Date().toISOString().slice(0, 10);
+    }
+  } catch (e) {
+    addPhotoStatus.textContent = `✗ ${String(e)}`;
+    addPhotoBtn.disabled = true;
+    processedImage = null;
+  }
+});
+
+addPhotoBtn.addEventListener('click', async () => {
+  if (!processedImage) return;
+  const date = newPhotoDate.value || new Date().toISOString().slice(0, 10);
+  const location = newPhotoLocation.value.trim();
+  const caption = newPhotoCaption.value.trim();
+  if (!location) {
+    addPhotoStatus.textContent = '✗ Location is required.';
+    return;
+  }
+  if (!caption) {
+    addPhotoStatus.textContent = '✗ Caption is required.';
+    return;
+  }
+
+  // Allocate next id
+  const used = gallery.map((g) => parseInt(g.num, 10)).filter(Number.isFinite);
+  const nextId = used.length === 0 ? 1 : Math.max(...used) + 1;
+  const num = String(nextId).padStart(2, '0');
+  const filename = `${num}.webp`;
+  const url = `/images/gallery/${filename}`;
+  const imagePath = `public${url}`;
+
+  addPhotoBtn.disabled = true;
+  addPhotoStatus.textContent = 'Committing…';
+
+  try {
+    // 1. Upload image
+    await putBinaryFile(imagePath, processedImage.base64, null, `gallery: upload photo ${num}`, pat);
+
+    // 2. Update gallery.env
+    gallery.push({ num, date, location, caption, url });
+    gallery.sort((a, b) => (a.date < b.date ? 1 : -1));
+    const newContent = serialiseGallery(gallery, galleryFile ? extractHeader(galleryFile.content) : '');
+    galleryFile = await getFile('data/gallery.env', pat);
+    await putFile('data/gallery.env', newContent, galleryFile!.sha, `gallery: add photo ${num} (${caption})`, pat);
+
+    // Refresh SHA
+    galleryFile = { path: 'data/gallery.env', content: newContent, sha: (await getFile('data/gallery.env', pat))!.sha };
+
+    addPhotoStatus.textContent = `✓ Uploaded as photo ${num}. Deploying…`;
+    newPhotoFile.value = '';
+    newPhotoLocation.value = '';
+    newPhotoCaption.value = '';
+    newPhotoDate.value = '';
+    newPhotoPreview.innerHTML = '';
+    processedImage = null;
+    renderPhotos();
+    renderBucketLinks();
+  } catch (e) {
+    addPhotoStatus.textContent = `✗ ${String(e)}`;
+  } finally {
+    addPhotoBtn.disabled = false;
+  }
+});
+
+// ───── Bucket list links ─────
+function renderBucketLinks() {
+  bucketLinks.innerHTML = '';
+  const checked = listItems.filter((li) => li.checked);
+  if (checked.length === 0) {
+    bucketLinks.innerHTML = '<p class="status">No checked items yet. Edit data/list.env and mark items checked there.</p>';
+    return;
+  }
+  for (const li of checked) {
+    const row = document.createElement('div');
+    row.className = 'bucket-row';
+    row.dataset.num = li.num;
+
+    const opts = gallery
+      .map((g) => `<option value="${escapeAttr(g.num)}" ${g.num === li.photo ? 'selected' : ''}>${escapeHtml(g.num)} · ${escapeHtml(g.caption || g.location)}</option>`)
+      .join('');
+
+    row.innerHTML = `
+      <span class="bucket-num">${escapeHtml(li.num)}.</span>
+      <span class="bucket-text">${escapeHtml(li.text)}</span>
+      <select class="bucket-photo">
+        <option value="">— none —</option>
+        ${opts}
+      </select>
+      <button class="btn btn-primary bucket-save">Save</button>
+      <span class="status bucket-status"></span>
+    `;
+    bucketLinks.appendChild(row);
+
+    row.querySelector('.bucket-save')!.addEventListener('click', () => saveBucketLink(li.num));
+  }
+}
+
+async function saveBucketLink(num: string) {
+  const row = bucketLinks.querySelector<HTMLElement>(`.bucket-row[data-num="${num}"]`)!;
+  const newPhoto = row.querySelector<HTMLSelectElement>('.bucket-photo')!.value;
+  const status = row.querySelector<HTMLElement>('.bucket-status')!;
+
+  const li = listItems.find((x) => x.num === num);
+  if (!li) return;
+  li.photo = newPhoto;
+
+  status.textContent = 'Saving…';
+  status.className = 'status';
+  try {
+    listFile = await getFile('data/list.env', pat);
+    const content = serialiseList(listItems);
+    const sha = await putFile('data/list.env', content, listFile!.sha, `list: link item ${num} to photo ${newPhoto || '(unlink)'}`, pat);
+    listFile = { path: 'data/list.env', content, sha };
+    status.textContent = '✓ Saved';
+    status.className = 'status status-ok';
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+// ───── Helpers ─────
+function extractHeader(content: string): string {
+  const lines = content.split('\n');
+  const headerLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith('#') || line.trim() === '') {
+      headerLines.push(line);
+    } else {
+      break;
+    }
+  }
+  return headerLines.join('\n');
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(s: string): string {
+  return escapeHtml(s);
+}
+
+// ───── Boot ─────
+tryAutoReconnect();
+</script>
+
+<style>
+  .settings-warning {
+    background: rgba(229, 127, 132, 0.15);
+    border: 1px solid var(--color-text-hover);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: var(--color-text);
+    font-family: var(--font-form);
+    margin: 0 0 2rem;
+  }
+
+  .settings-section {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    font-family: var(--font-form);
+  }
+
+  .settings-section h2 {
+    margin-top: 0;
+    font-family: var(--font-display);
+    color: var(--color-text);
+    border-bottom: 1px solid rgba(47, 80, 97, 0.15);
+    padding-bottom: 0.5rem;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin: 0.5rem 0;
+  }
+
+  .row label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9em;
+    color: var(--color-text);
+  }
+
+  .row label.grow { flex: 1; min-width: 200px; }
+
+  .settings-section input[type="text"],
+  .settings-section input[type="password"],
+  .settings-section input[type="date"],
+  .settings-section input[type="file"],
+  .settings-section select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgba(47, 80, 97, 0.3);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-text);
+    background: white;
+  }
+
+  .settings-section input[type="file"] {
+    padding: 0.3rem;
+  }
+
+  .btn {
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--color-text);
+    color: white;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-text-hover);
+  }
+
+  .btn-danger {
+    background: rgba(229, 127, 132, 0.2);
+    color: var(--color-text);
+    border: 1px solid var(--color-text-hover);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(229, 127, 132, 0.4);
+  }
+
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--color-text);
+    border: 1px solid rgba(47, 80, 97, 0.3);
+  }
+
+  .status {
+    font-size: 0.85em;
+    color: var(--color-text);
+    opacity: 0.7;
+    margin: 0 0 0 0.5rem;
+  }
+
+  .status-ok { color: #2d8659; opacity: 1; }
+  .status-error { color: #b04e58; opacity: 1; }
+
+  /* Photo list */
+  .photo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .photo-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    background: white;
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+
+  .photo-thumb {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .photo-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .photo-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85em;
+  }
+
+  .photo-fields .url input {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+
+  .photo-fields .actions {
+    margin-top: 0.5rem;
+  }
+
+  /* Add photo */
+  .add-photo {
+    background: white;
+    border: 1px dashed rgba(47, 80, 97, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+  }
+  .add-photo summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .add-photo__form {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+  }
+  .preview__img {
+    max-width: 200px;
+    border-radius: 4px;
+  }
+  .preview__info {
+    color: #2d8659;
+    font-size: 0.9em;
+  }
+
+  /* Bucket list links */
+  .bucket-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+
+  .bucket-row {
+    display: grid;
+    grid-template-columns: 3em 1fr 200px auto auto;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    background: white;
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .bucket-num {
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: right;
+  }
+
+  .bucket-text {
+    color: var(--color-text);
+  }
+
+  .bucket-photo {
+    font-family: inherit;
+    padding: 0.3rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid rgba(47, 80, 97, 0.3);
+    background: white;
+    color: var(--color-text);
+    font-size: 0.9em;
+  }
+
+  @media (max-width: 768px) {
+    .photo-row {
+      grid-template-columns: 1fr;
+    }
+    .bucket-row {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+    .bucket-num {
+      text-align: left;
+    }
+  }
+</style>

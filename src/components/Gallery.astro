@@ -107,9 +107,9 @@ const items = (Astro.props as Props).items ?? loadGallerySorted();
       if (!items.length) return;
       current = ((idx % items.length) + items.length) % items.length;
       const it = items[current];
-      dialogImg.src = it.url;
-      dialogImg.alt = it.caption || it.location || `Photo ${it.num}`;
-      dialogCaption.innerHTML = renderCaption(it);
+      dialogImg!.src = it.url;
+      dialogImg!.alt = it.caption || it.location || `Photo ${it.num}`;
+      dialogCaption!.innerHTML = renderCaption(it);
       history.replaceState(null, '', `#${it.num}`);
     }
 
