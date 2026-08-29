@@ -1,8 +1,12 @@
 ---
+/* Web3Forms-backed blessing form.
+   Set PUBLIC_WEB3FORMS_KEY as a GitHub Actions variable to enable.
+   When the key is empty, the form renders disabled with a setup hint. */
 const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
 const configured = accessKey.length > 0;
 const subject = 'New blessing for buc.ketli.st';
 ---
+
 {!configured && (
   <p class="blessing-form__warning">
     表單尚未啟用 —— 請先設定 <code>PUBLIC_WEB3FORMS_KEY</code>（見 README）。
@@ -16,9 +20,12 @@ const subject = 'New blessing for buc.ketli.st';
   aria-label="Leave a blessing"
   data-subject={subject}
 >
+  {/* Hidden fields — access key, subject, sender name. */}
   <input type="hidden" name="access_key" value={accessKey} />
   <input type="hidden" name="subject" value={subject} />
   <input type="hidden" name="from_name" value="buc.ketli.st blessings" />
+
+  {/* Honeypot — bots usually fill every input including hidden ones. */}
   <input
     type="checkbox"
     name="botcheck"
@@ -73,9 +80,12 @@ const subject = 'New blessing for buc.ketli.st';
     送出祝福
   </button>
 
+  {/* aria-live="polite" announces submission status to screen readers. */}
   <p class="blessing-form__status" role="status" aria-live="polite"></p>
 </form>
 
+<!-- Submits the form via fetch so we can show success/error in-page
+     without a full page reload. -->
 <script>
   const form = document.querySelector<HTMLFormElement>('.blessing-form');
   const status = form?.querySelector<HTMLParagraphElement>('.blessing-form__status');

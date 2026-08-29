@@ -1,6 +1,13 @@
 ---
+/* Wedding anniversary: 2002-03-03. The header counter and title are
+   driven from this date. Edit here to update the marriage date. */
 const marriageDate = '2002-03-03';
 ---
+
+<!-- Site header. Fixed position at the top of every page. In portrait
+     phones it stacks vertically (photo above text); in landscape and
+     desktop it sits in a row (photo left, text right). The fluid sizes
+     and the @container query for stacking are in global.css. -->
 <header class="site-header">
   <div class="site-header__inner">
     <img class="site-header__photo" src="/images/profile.jpg" alt="" width="160" height="160" loading="eager" />
@@ -16,6 +23,9 @@ const marriageDate = '2002-03-03';
   </div>
 </header>
 
+<!-- Updates the day-count and year-count spans in the header. Runs once
+     on load and then once a day. Self-contained: bails out if the header
+     markup isn't on the current page. -->
 <script is:inline define:vars={{ marriageDate }}>
   (function () {
     const start = new Date(marriageDate + 'T00:00:00');

@@ -1,6 +1,8 @@
 ---
+/* Site footer + a "back to top" button (positioned fixed in global.css). */
 const year = new Date().getFullYear();
 ---
+
 <footer class="site-footer">
   <p>
     <a href="/comment/" rel="noopener noreferrer">祝福我們 ❤️</a>
@@ -19,12 +21,14 @@ const year = new Date().getFullYear();
   </svg>
 </a>
 
+<!-- Back-to-top button: shows when scrolled > 400px, scrolls smoothly
+     to the top on click. Skipped entirely if the button isn't on the
+     current page (e.g. if a page template removes the footer). -->
 <script>
   const btn = document.querySelector('.to-top');
   if (btn) {
     const onScroll = () => {
-      if (window.scrollY > 400) btn.classList.add('is-visible');
-      else btn.classList.remove('is-visible');
+      btn.classList.toggle('is-visible', window.scrollY > 400);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();

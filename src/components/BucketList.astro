@@ -1,25 +1,28 @@
 ---
 import { loadListSorted } from '../lib/parseList';
+import { pickRandomInt } from '../lib/utils';
+import type { BucketItem } from '../lib/types';
 
-const items = loadListSorted();
-
-function pickRandomInt(max: number): number {
-  return 1 + Math.floor(Math.random() * max);
-}
+const items: BucketItem[] = loadListSorted();
 ---
+
+<!-- The main bucket list. Each item picks one of four checkbox SVG
+     variants randomly at build time (so the visual is varied without
+     per-item data) and links out to a gallery photo, an external URL,
+     or just stays in-place as an anchor depending on what's set. -->
 <section class="bucket-list" aria-label="Bucket list">
   {items.map((item, i) => {
-    const checkNum = pickRandomInt(4);
+    // Pick a random checked/unchecked variant (1..4) for the icon.
     const variant = i % 4 + 1;
+    const randomVariant = pickRandomInt(4);
     const checkSrc = item.checked
-      ? `/svg/checkboxes/checked${checkNum}.svg`
+      ? `/svg/checkboxes/checked${randomVariant}.svg`
       : `/svg/checkboxes/unchecked${variant}.svg`;
 
-    // Decide link target.
-    // - checked + has photo id  → deep-link to gallery lightbox (`/gallery/#NN`)
-    // - has external link       → that link
-    // - placeholder link         → own anchor (no surprise 404s)
-    // - otherwise                → own anchor
+    // Decide the link target, in priority order:
+    //   1. checked item with a photo id  → /gallery/#photoId (deep-link)
+    //   2. has a real external link       → that link
+    //   3. placeholder link or empty      → self-anchor (#item-NN)
     let href = `#item-${item.num}`;
     let isExternal = false;
     if (item.checked && item.photo) {

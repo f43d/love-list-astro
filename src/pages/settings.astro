@@ -383,7 +383,7 @@ addPhotoBtn.addEventListener('click', async () => {
     await putBinaryFile(imagePath, processedImage.base64, null, `gallery: upload photo ${num}`, pat);
 
     // 2. Update gallery.env
-    gallery.push({ num, date, location, caption, url });
+    gallery.push({ num, id: nextId, date, location, caption, url });
     gallery.sort((a, b) => (a.date < b.date ? 1 : -1));
     const newContent = serialiseGallery(gallery, galleryFile ? extractHeader(galleryFile.content) : '');
     galleryFile = await getFile('data/gallery.env', pat);

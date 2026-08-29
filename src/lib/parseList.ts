@@ -1,49 +1,39 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { resolve, dirname } from 'node:path';
+/* ============================================================================
+ * data/list.env — bucket list items, one per line:
+ *
+ *     NN|checked|text|link|photo
+ *
+ *   NN      : zero-padded id
+ *   checked : "true" or "false"
+ *   text    : the item's full text
+ *   link    : external URL (or empty for self-anchor)
+ *   photo   : gallery photo id this item links to (or empty)
+ *
+ * Server-side only. Used by Astro components.
+ * ========================================================================== */
 
-export interface BucketItem {
-  id: number;
-  num: string;
-  text: string;
-  checked: boolean;
-  link: string;
-  photo: string;
-}
-
-const here = dirname(fileURLToPath(import.meta.url));
-const DATA_PATH = resolve(here, '../../data/list.env');
+import { readCached, parseLines } from './parseEnv';
+import type { BucketItem } from './types';
 
 let cache: BucketItem[] | null = null;
 
-function parseEnv(text: string): BucketItem[] {
-  const out: BucketItem[] = [];
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-
-const [numRaw, checkedRaw, textRaw, linkRaw, photoRaw] = line.split('|');
-    if (!numRaw) continue;
-
-    const id = Number.parseInt(numRaw, 10);
-    if (!Number.isFinite(id)) continue;
-
-    out.push({
-      id,
-      num: String(id).padStart(2, '0'),
-      checked: checkedRaw?.trim().toLowerCase() === 'true',
-      text: textRaw.trim(),
-      link: (linkRaw ?? '').trim(),
-      photo: (photoRaw ?? '').trim(),
-    });
-  }
-  return out;
-}
-
 export function loadList(): BucketItem[] {
   if (cache) return cache;
-  const text = readFileSync(DATA_PATH, 'utf8');
-  cache = parseEnv(text);
+  cache = parseLines<BucketItem>(readCached('list.env'), 5, (f) => {
+    const id = Number.parseInt(f[0], 10);
+    if (!Number.isFinite(id)) {
+      // Skip lines with non-numeric id (shouldn't happen in well-formed data).
+      throw new Error(`Invalid bucket-list line: ${f.join('|')}`);
+    }
+    return {
+      num: f[0].padStart(2, '0'),
+      id,
+      text: f[2],
+      checked: f[1].toLowerCase() === 'true',
+      link: f[3],
+      photo: f[4],
+    };
+  });
   return cache;
 }
 

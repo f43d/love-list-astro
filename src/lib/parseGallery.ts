@@ -1,49 +1,38 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { resolve, dirname } from 'node:path';
+/* ============================================================================
+ * data/gallery.env — gallery photo metadata, one per line:
+ *
+ *     NN|date|location|caption|url
+ *
+ *   NN       : zero-padded id
+ *   date     : YYYY-MM-DD when the photo was taken
+ *   location : city / place
+ *   caption  : short description
+ *   url      : full URL or repo-relative path
+ *
+ * Server-side only. Used by Astro components.
+ * ========================================================================== */
 
-export interface GalleryItem {
-  id: number;
-  num: string;
-  date: string;
-  location: string;
-  caption: string;
-  url: string;
-}
-
-const here = dirname(fileURLToPath(import.meta.url));
-const DATA_PATH = resolve(here, '../../data/gallery.env');
+import { readCached, parseLines } from './parseEnv';
+import type { GalleryItem } from './types';
 
 let cache: GalleryItem[] | null = null;
 
-function parseEnv(text: string): GalleryItem[] {
-  const out: GalleryItem[] = [];
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-
-    const [numRaw, dateRaw, locationRaw, captionRaw, urlRaw] = line.split('|');
-    if (!numRaw || !urlRaw) continue;
-
-    const id = Number.parseInt(numRaw, 10);
-    if (!Number.isFinite(id)) continue;
-
-    out.push({
-      id,
-      num: String(id).padStart(2, '0'),
-      date: (dateRaw ?? '').trim(),
-      location: (locationRaw ?? '').trim(),
-      caption: (captionRaw ?? '').trim(),
-      url: urlRaw.trim(),
-    });
-  }
-  return out;
-}
-
 export function loadGallery(): GalleryItem[] {
   if (cache) return cache;
-  const text = readFileSync(DATA_PATH, 'utf8');
-  cache = parseEnv(text);
+  cache = parseLines<GalleryItem>(readCached('gallery.env'), 5, (f) => {
+    const id = Number.parseInt(f[0], 10);
+    if (!Number.isFinite(id)) {
+      throw new Error(`Invalid gallery line: ${f.join('|')}`);
+    }
+    return {
+      num: f[0].padStart(2, '0'),
+      id,
+      date: f[1],
+      location: f[2],
+      caption: f[3],
+      url: f[4],
+    };
+  });
   return cache;
 }
 
