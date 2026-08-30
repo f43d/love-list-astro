@@ -8,8 +8,12 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ### Added
 
-- **Wenwrite Proportional** font on `/100-reasons-why/` body prose. Subsetted
-  to 82 KB woff2 covering only the 244 codepoints used in the body.
+- **Wenwrite Proportional** font on `/100-reasons-why/` body prose.
+  Subsetted to 82 KB woff2 covering only the 244 codepoints used in
+  the body.
+- **Hidden `/settings/` page** for owner-only photo management. Auth
+  via PAT in sessionStorage; upload/edit/delete photos; link to checked
+  bucket items. All client-side — no server added.
 - Responsive design rewrite using `clamp()` for fluid type/spacing,
   `@container` queries on the header, and a portrait-specific
   `@media` rule that bumps padding for the hero photo + 3-line text
@@ -22,8 +26,8 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   trigger.
 - Header photo / counter / title / subtitle sizes all use `clamp()` —
   scale fluidly with viewport on both iPhone and desktop.
-- Landscape header grown ~70% (from 41px photo + cramped text to
-  86px photo + roomy text). Portrait header is a real hero element
+- Landscape header grown ~70% (from 41px photo + cramped text to 86px
+  photo + roomy text). Portrait header is a real hero element
   (~50vw photo with 3 stacked text lines below).
 - Bucket list / page / gallery top-padding is now `clamp(20–30rem,
   vh, 28–40rem)` depending on orientation, so the fixed header + its
@@ -36,6 +40,13 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   blur at the bottom for a seamless blend into the page.
 - "100-reasons-why" link in header now reads "是笑與**泪**的同行"
   (泪 = Simplified, since DC-CST is missing both 淚/涙).
+- 4 DC-CST-missing characters substituted with forms that ARE in
+  DC-CST: 强 (footer), 哄 (item 28), 爲 (item 74), 録 (item 89).
+  Other 6 previously-missing chars were never rendered in a DC-CST
+  context to begin with — they're in the comment page (Noto Sans HK),
+  the 100-reasons-why page (wenwrite), or a non-visual meta tag.
+- Footer third line now reads "版權所有 抄橋必屌 © 2026 buc.ketli.st"
+  (the previous order had a stray period and the year was missing).
 
 ### Fixed
 
@@ -48,8 +59,12 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 - **Header on .page was blocking the title** on iPhone portrait — fixed
   by adding more headroom in the portrait @media rule.
 - **Page-top margin on /comment/ and /100-reasons-why/** was too small
-  — added `.page { padding-top: clamp(7rem, 28vw, 18rem) }` and bumped
-  it under the portrait @media.
+  — added `.page { padding-top: clamp(7rem, 28vw, 18rem) }` and
+  bumped it under the portrait @media.
+- **89 bucket list items disappeared silently** when the end-of-day
+  cleanup refactored the env parser with fieldCount=5 while only 3
+  rows had a 5th column. parseList now uses fieldCount=4 with extras
+  merged into the last field — old rows parse correctly.
 
 ### Code quality
 
@@ -62,6 +77,16 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   ~30 lines each, using the shared parser.
 - `settingsClient.ts` consolidated the two PUT paths into a single
   `putFileAtPath` helper.
+- Component comment blocks describing what each file does and why.
+
+### Documentation
+
+- `docs/PERMANENCE.md` filled in (Cloudflare registrar, 6 June 2027
+  renewal, son/daughter as GitHub designated successor, GitLab mirror
+  + local backup as action items).
+- `docs/HANDOFF.md` — self-contained brief a future AI session can
+  read in 2-3 minutes to be productive.
+- `docs/AI-WORKFLOW.md` — when to install which opencode plugin.
 
 ---
 
