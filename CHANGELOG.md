@@ -29,6 +29,21 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   editable here — section 3 already handles `photo`, and `link`
   rarely changes.
 
+### Changed (settings page)
+
+- `/settings/` restructured into 3 tabs: **List editor** (default),
+  **List links**, **Photos**. One click between concerns; no more
+  scrolling past unrelated sections.
+- List editor paginated to 10 items per page (Prev/Next + "Page X of
+  Y" indicator). Item 89 is now reachable via page 9 instead of
+  scrolling through 88 rows above it.
+- Editor now shows all items (including blank-text rows) so newly-
+  added empty rows can be edited immediately. The public list still
+  omits blank-text rows.
+- "➕ Add item" button at the top of the List editor tab creates a
+  row with the lowest missing NN (fills 90, 91, … 97 in order, then
+  100+). After add, the page jumps to the new item.
+
 ### Fixed (final)
 
 - 為 → 爲 (data/list.env item 74) — Traditional variant, in DC-CST.

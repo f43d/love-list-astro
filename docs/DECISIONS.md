@@ -281,3 +281,24 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - `npx astro check` → 0 errors, 0 warnings. `npm run build` → 5 pages clean.
 - **Cost to revisit**: bulk-edit (one-shot Save-all) if multi-row fixes become common; "Add item" sub-form if NN 90–97 should ever be filled; per-session commits if the per-row cadence becomes noisy in git history.
 - **Files touched**: `src/pages/settings.astro` (markup + script + CSS).
+
+## 2026-08-30 — Settings page: tabs + paginated list editor + add-item
+
+- **Decision**: restructure `/settings/` into 3 tabs ("List editor" default / "List links" / "Photos"). The list editor is paginated 10 items per page with Prev/Next + "Page X of Y" indicator. An "➕ Add item" button at the top creates a new row with the lowest missing NN (so first click → 90, next → 91, …, until 97 is filled, then 100, 101…). After add, the page jumps to the new item. The editor now shows ALL items including blank-text rows (so newly-added empty rows are editable); the public list still omits blank-text rows.
+- **Context**: the previous layout had 4 stacked `<section>` blocks. Section 4 (Edit bucket list, 100 rows) sat right below section 3 (Bucket list links). To edit item 89, the user had to scroll past all 88 rows above it; to link a checked item to a photo, the user had to scroll past section 2 (Photos) and then through section 4. The user also had no way to add new items — needed to fill NN 90–97 which are gaps in the data file.
+- **Rejected**:
+  - **Keep all 4 sections stacked, just add an "Add item" button** — keeps the scroll problem; user explicitly asked for tabs.
+  - **Anchor-link sidebar with NN jump** — adds a permanent sidebar for a navigation problem solved better by pagination.
+  - **Show all 100 rows with a sticky NN-jump dropdown** — works but the user explicitly asked for 10-per-page split.
+  - **NN-based pagination (page 7 = items 70–79 by NN)** — fails because NNs 90–97 don't exist; an NN-based page 9 would have only items 98–99 (sparse). Index-based pagination gives 10 pages of 10 each after 90–97 are filled.
+  - **Auto-fill next NN globally (always 100+)** — ignores the existing 90–97 gap; user wants gap-fill first.
+  - **Insert new item with placeholder text "(new — type to fill)"** — hacky; placeholder would render in the public site if the user adds an item and walks away.
+  - **Strict "blank text omits from editor" filter** — incompatible with "Add item" because new rows start blank; the editor now shows all rows for editing, and the public list still omits blank-text rows (the user-visible "current way" rule is unchanged).
+- **Consequence**:
+  - Settings page is one screen per concern: List editor (default), List links, Photos. One click between them — no scrolling.
+  - Item 89 is reachable in one click (page 9). Each page shows 10 items.
+  - NN 90–97 can be filled via repeated "Add item" clicks; each fill is one commit (`list: add item NN`).
+  - Saving an item with blank text no longer removes the row from the editor — the row stays visible so the user can re-type. The public list still hides it.
+  - `npx astro check` → 0 errors, 0 warnings. `npm run build` → 5 pages clean.
+- **Cost to revisit**: if item count exceeds ~200, the page size of 10 may feel too small (consider 20 or a jump-to-NN control); if the user ever wants to "save all changes at once", revisit per-row commits.
+- **Files touched**: `src/pages/settings.astro` (template + script + CSS).

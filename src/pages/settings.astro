@@ -11,68 +11,86 @@ import Base from '../layouts/Base.astro';
       GitHub Action deploys (~30 s).
     </p>
 
-    <!-- ───── 1. Connect with PAT ───── -->
-    <section id="auth-section" class="settings-section">
-      <h2>1. Connect to GitHub</h2>
-      <p>Paste a PAT with <code>Contents: Read and write</code> on <code>f43d/love-list-astro</code>.</p>
-      <div class="row">
-        <input type="password" id="pat-input" placeholder="github_pat_..." autocomplete="off" spellcheck="false" />
-        <button id="connect-btn" class="btn btn-primary">Connect</button>
-        <button id="disconnect-btn" class="btn btn-secondary" hidden>Disconnect</button>
-      </div>
-      <p id="auth-status" class="status"></p>
-    </section>
-
-    <!-- ───── 2. Photo management (hidden until connected) ───── -->
-    <section id="manage-section" class="settings-section" hidden>
-      <h2>2. Photos</h2>
-      <p>Add, edit, or remove photos. Each photo can be linked to a checked bucket list item below.</p>
-
-      <div id="photos-list" class="photo-list"></div>
-
-      <details class="add-photo">
-        <summary>➕ Add a new photo</summary>
-        <div class="add-photo__form">
-          <div class="row">
-            <label>Image file
-              <input type="file" id="new-photo-file" accept="image/*" />
-            </label>
-          </div>
-          <div id="new-photo-preview" class="preview"></div>
-          <div class="row">
-            <label>Date
-              <input type="date" id="new-photo-date" />
-            </label>
-            <label>Location
-              <input type="text" id="new-photo-location" placeholder="Tokyo" />
-            </label>
-          </div>
-          <div class="row">
-            <label class="grow">Caption
-              <input type="text" id="new-photo-caption" placeholder="Cherry blossoms in Ueno park" />
-            </label>
-          </div>
-          <div class="row">
-            <button id="add-photo-btn" class="btn btn-primary" disabled>Upload &amp; commit</button>
-            <span id="add-photo-status" class="status"></span>
-          </div>
+    <!-- ───── Auth (above tabs) ───── -->
+    <section id="auth-section" class="settings-section auth-bar">
+      <div id="auth-prompt" class="auth-bar__prompt">
+        <label for="pat-input" class="auth-bar__label">Paste a PAT with <code>Contents: Read and write</code> on <code>f43d/love-list-astro</code></label>
+        <div class="row">
+          <input type="password" id="pat-input" placeholder="github_pat_..." autocomplete="off" spellcheck="false" />
+          <button id="connect-btn" class="btn btn-primary">Connect</button>
         </div>
-      </details>
+        <p id="auth-status" class="status"></p>
+      </div>
+      <div id="auth-status-bar" class="auth-bar__connected" hidden>
+        <span>Connected as <strong id="auth-user">…</strong></span>
+        <button id="disconnect-btn" class="btn btn-secondary">Disconnect</button>
+      </div>
     </section>
 
-    <!-- ───── 3. Bucket list links (hidden until connected) ───── -->
-    <section id="links-section" class="settings-section" hidden>
-      <h2>3. Bucket list links</h2>
-      <p>Link each checked item to one photo. Visitors clicking that item will deep-link to the photo in the gallery lightbox.</p>
-      <div id="bucket-links" class="bucket-links"></div>
-    </section>
+    <!-- ───── Tab bar (hidden until connected) ───── -->
+    <nav id="tab-bar" class="tab-bar" hidden role="tablist">
+      <button class="tab-btn is-active" data-tab="list-editor" role="tab" aria-selected="true">📝 List editor</button>
+      <button class="tab-btn" data-tab="list-links" role="tab" aria-selected="false">🔗 List links</button>
+      <button class="tab-btn" data-tab="photos" role="tab" aria-selected="false">📷 Photos</button>
+    </nav>
 
-    <!-- ───── 4. Bucket list editor (hidden until connected) ───── -->
-    <section id="list-editor-section" class="settings-section" hidden>
-      <h2>4. Edit bucket list</h2>
-      <p>Mark items done or edit their title. Blank text hides the item from the public list. Sorted by NN; rows with blank text are not shown.</p>
-      <div id="list-editor" class="list-editor"></div>
-    </section>
+    <!-- ───── Panels container (hidden until connected) ───── -->
+    <div id="tabs-root" hidden>
+
+      <!-- Panel: List editor (default tab) -->
+      <section id="panel-list-editor" class="tab-panel is-active" data-tab-panel="list-editor" role="tabpanel">
+        <p class="tab-intro">Mark items done or edit their title. Blank text hides the item from the public list.</p>
+        <div class="list-editor-toolbar">
+          <button id="add-item-btn" class="btn btn-primary">➕ Add item</button>
+          <span class="hint">Auto-fills the lowest missing NN (90, 91, …).</span>
+          <span id="add-item-status" class="status"></span>
+        </div>
+        <div class="pagination" id="list-pagination-top"></div>
+        <div id="list-editor" class="list-editor"></div>
+        <div class="pagination" id="list-pagination-bottom"></div>
+      </section>
+
+      <!-- Panel: List links -->
+      <section id="panel-list-links" class="tab-panel" data-tab-panel="list-links" role="tabpanel" hidden>
+        <p class="tab-intro">Link each checked item to one photo. Visitors clicking that item will deep-link to the photo in the gallery lightbox.</p>
+        <div id="bucket-links" class="bucket-links"></div>
+      </section>
+
+      <!-- Panel: Photos -->
+      <section id="panel-photos" class="tab-panel" data-tab-panel="photos" role="tabpanel" hidden>
+        <p class="tab-intro">Add, edit, or remove photos. Each photo can be linked to a checked bucket list item.</p>
+        <div id="photos-list" class="photo-list"></div>
+        <details class="add-photo">
+          <summary>➕ Add a new photo</summary>
+          <div class="add-photo__form">
+            <div class="row">
+              <label>Image file
+                <input type="file" id="new-photo-file" accept="image/*" />
+              </label>
+            </div>
+            <div id="new-photo-preview" class="preview"></div>
+            <div class="row">
+              <label>Date
+                <input type="date" id="new-photo-date" />
+              </label>
+              <label>Location
+                <input type="text" id="new-photo-location" placeholder="Tokyo" />
+              </label>
+            </div>
+            <div class="row">
+              <label class="grow">Caption
+                <input type="text" id="new-photo-caption" placeholder="Cherry blossoms in Ueno park" />
+              </label>
+            </div>
+            <div class="row">
+              <button id="add-photo-btn" class="btn btn-primary" disabled>Upload &amp; commit</button>
+              <span id="add-photo-status" class="status"></span>
+            </div>
+          </div>
+        </details>
+      </section>
+
+    </div>
   </article>
 </Base>
 
@@ -92,6 +110,9 @@ let listItems: BucketItem[] = [];
 let galleryFile: GithubFile | null = null;
 let listFile: GithubFile | null = null;
 
+const PAGE_SIZE = 10;
+let currentListPage = 0;
+
 // ───── DOM refs ─────
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -99,12 +120,20 @@ const patInput = $<HTMLInputElement>('pat-input');
 const connectBtn = $('connect-btn');
 const disconnectBtn = $('disconnect-btn');
 const authStatus = $('auth-status');
-const manageSection = $('manage-section');
-const linksSection = $('links-section');
-const listEditorSection = $('list-editor-section');
+const authPrompt = $('auth-prompt');
+const authStatusBar = $('auth-status-bar');
+const authUser = $('auth-user');
+const tabBar = $('tab-bar');
+const tabsRoot = $('tabs-root');
+const tabBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab-btn'));
+const tabPanels = Array.from(document.querySelectorAll<HTMLElement>('.tab-panel'));
 const photosList = $('photos-list');
 const bucketLinks = $('bucket-links');
 const listEditor = $('list-editor');
+const addItemBtn = $<HTMLButtonElement>('add-item-btn');
+const addItemStatus = $('add-item-status');
+const listPaginationTop = $('list-pagination-top');
+const listPaginationBottom = $('list-pagination-bottom');
 
 // ───── Auth ─────
 async function tryAutoReconnect() {
@@ -145,26 +174,45 @@ function disconnect() {
   clearPat();
   patInput.value = '';
   setAuthStatus('Disconnected.');
+  authPrompt.hidden = false;
+  authStatusBar.hidden = true;
+  tabBar.hidden = true;
+  tabsRoot.hidden = true;
   connectBtn.hidden = false;
   disconnectBtn.hidden = true;
-  manageSection.hidden = true;
-  linksSection.hidden = true;
-  listEditorSection.hidden = true;
 }
 
 function onAuthenticated(user: string) {
-  setAuthStatus(`Connected as ${user}.`);
+  authUser.textContent = user;
+  authPrompt.hidden = true;
+  authStatusBar.hidden = false;
+  tabBar.hidden = false;
+  tabsRoot.hidden = false;
   connectBtn.hidden = true;
   disconnectBtn.hidden = false;
-  manageSection.hidden = false;
-  linksSection.hidden = false;
-  listEditorSection.hidden = false;
   loadAll().catch((e) => setAuthStatus(`Load failed: ${e}`, true));
 }
 
 function setAuthStatus(msg: string, isError = false) {
   authStatus.textContent = msg;
   authStatus.className = `status ${isError ? 'status-error' : 'status-ok'}`;
+}
+
+// ───── Tabs ─────
+function showTab(name: string) {
+  for (const btn of tabBtns) {
+    const active = btn.dataset.tab === name;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  }
+  for (const panel of tabPanels) {
+    const active = panel.dataset.tabPanel === name;
+    panel.classList.toggle('is-active', active);
+    panel.hidden = !active;
+  }
+}
+for (const btn of tabBtns) {
+  btn.addEventListener('click', () => showTab(btn.dataset.tab ?? ''));
 }
 
 connectBtn.addEventListener('click', connect);
@@ -478,19 +526,40 @@ async function saveBucketLink(num: string) {
 }
 
 // ───── Bucket list editor ─────
-function renderListEditor() {
-  listEditor.innerHTML = '';
-  // Show only items with non-empty text, sorted by NN.
-  const visible = listItems
-    .filter((li) => li.text.trim() !== '')
-    .sort((a, b) => a.id - b.id);
+function nextMissingNN(): number {
+  const used = new Set(listItems.map((li) => li.id));
+  // Fill gaps 0..99 first, then overflow to 100+.
+  for (let n = 0; n <= 99; n++) {
+    if (!used.has(n)) return n;
+  }
+  let n = 100;
+  while (used.has(n)) n++;
+  return n;
+}
 
-  if (visible.length === 0) {
-    listEditor.innerHTML = '<p class="status">No items to show. Add rows to data/list.env or refresh.</p>';
+function renderListEditor() {
+  // Show ALL items sorted by NN — including blank-text rows, so they can be
+  // edited later. The public list still omits blank-text rows.
+  const sorted = [...listItems].sort((a, b) => a.id - b.id);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  // Clamp page in case the list shrank.
+  if (currentListPage >= totalPages) currentListPage = totalPages - 1;
+  if (currentListPage < 0) currentListPage = 0;
+  const start = currentListPage * PAGE_SIZE;
+  const pageItems = sorted.slice(start, start + PAGE_SIZE);
+
+  const paginationHtml = renderPagination(totalPages, sorted.length);
+  listPaginationTop.innerHTML = paginationHtml;
+  listPaginationBottom.innerHTML = paginationHtml;
+
+  listEditor.innerHTML = '';
+  if (pageItems.length === 0) {
+    listEditor.innerHTML = '<p class="status">No items to show. Click "➕ Add item" above to start.</p>';
     return;
   }
 
-  for (const li of visible) {
+  for (const li of pageItems) {
     const row = document.createElement('div');
     row.className = 'list-editor-row';
     row.dataset.num = li.num;
@@ -498,13 +567,35 @@ function renderListEditor() {
     row.innerHTML = `
       <input type="checkbox" class="le-check" ${li.checked ? 'checked' : ''} aria-label="Done" />
       <span class="le-num">${escapeHtml(li.num)}</span>
-      <input type="text" class="le-text" value="${escapeAttr(li.text)}" placeholder="(blank hides the item)" />
+      <input type="text" class="le-text" value="${escapeAttr(li.text)}" placeholder="(blank hides the item from the public site)" />
       <button class="btn btn-primary le-save">Save</button>
       <span class="status le-status"></span>
     `;
     listEditor.appendChild(row);
 
     row.querySelector('.le-save')!.addEventListener('click', () => saveListItem(li.num));
+  }
+
+  wirePagination();
+}
+
+function renderPagination(totalPages: number, totalItems: number): string {
+  const page1 = currentListPage + 1;
+  const first = currentListPage * PAGE_SIZE + 1;
+  const last = Math.min((currentListPage + 1) * PAGE_SIZE, totalItems);
+  return `
+    <button class="btn btn-secondary page-prev" ${currentListPage === 0 ? 'disabled' : ''}>← Prev</button>
+    <span class="page-indicator">Page <strong>${page1}</strong> of ${totalPages} <span class="muted">(items ${first}–${last} of ${totalItems})</span></span>
+    <button class="btn btn-secondary page-next" ${currentListPage >= totalPages - 1 ? 'disabled' : ''}>Next →</button>
+  `;
+}
+
+function wirePagination() {
+  for (const el of document.querySelectorAll<HTMLButtonElement>('.page-prev')) {
+    el.addEventListener('click', () => { if (currentListPage > 0) { currentListPage--; renderListEditor(); } });
+  }
+  for (const el of document.querySelectorAll<HTMLButtonElement>('.page-next')) {
+    el.addEventListener('click', () => { currentListPage++; renderListEditor(); });
   }
 }
 
@@ -532,14 +623,8 @@ async function saveListItem(num: string) {
     status.textContent = '✓ Saved';
     status.className = 'status status-ok';
 
-    // If checked state changed, refresh section 3 (it only shows checked items).
+    // If checked state changed, refresh the list-links tab (it only shows checked items).
     if (wasChecked !== newChecked) renderBucketLinks();
-
-    // If the user blanked an item's text, remove it from the editor view
-    // (matches "blank content is omitted as the current way").
-    if (newText === '' && wasText !== '') {
-      row.remove();
-    }
   } catch (e) {
     // Revert in-memory change so the UI matches the on-disk truth.
     li.text = wasText;
@@ -548,6 +633,46 @@ async function saveListItem(num: string) {
     status.className = 'status status-error';
   }
 }
+
+async function addListItem() {
+  const newId = nextMissingNN();
+  const newItem: BucketItem = {
+    num: String(newId).padStart(2, '0'),
+    id: newId,
+    text: '',
+    checked: false,
+    link: '',
+    photo: '',
+  };
+  listItems.push(newItem);
+
+  addItemStatus.textContent = 'Adding…';
+  addItemStatus.className = 'status';
+  addItemBtn.disabled = true;
+  try {
+    listFile = await getFile('data/list.env', pat);
+    const content = serialiseList(listItems);
+    const sha = await putFile('data/list.env', content, listFile!.sha, `list: add item ${newItem.num}`, pat);
+    listFile = { path: 'data/list.env', content, sha };
+    addItemStatus.textContent = `✓ Added item ${newItem.num}`;
+    addItemStatus.className = 'status status-ok';
+
+    // Jump to the page containing the new item, then render.
+    currentListPage = Math.floor((listItems.length - 1) / PAGE_SIZE);
+    renderListEditor();
+  } catch (e) {
+    // Roll back the in-memory addition.
+    listItems = listItems.filter((li) => li.id !== newId);
+    addItemStatus.textContent = `✗ ${String(e)}`;
+    addItemStatus.className = 'status status-error';
+  } finally {
+    addItemBtn.disabled = false;
+  }
+}
+
+addItemBtn.addEventListener('click', () => addListItem().catch((e) => {
+  addItemStatus.textContent = `✗ ${String(e)}`;
+}));
 
 // ───── Helpers ─────
 function extractHeader(content: string): string {
@@ -590,6 +715,123 @@ tryAutoReconnect();
     color: var(--color-text);
     font-family: var(--font-form);
     margin: 0 0 2rem;
+  }
+
+  /* ───── Auth bar (compact, above tabs) ───── */
+  .auth-bar {
+    padding: 0.75rem 1rem;
+  }
+
+  .auth-bar__label {
+    display: block;
+    font-size: 0.9em;
+    color: var(--color-text);
+    margin-bottom: 0.4rem;
+  }
+
+  .auth-bar__connected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .auth-bar__connected strong {
+    color: var(--color-text-hover);
+  }
+
+  /* ───── Tabs ───── */
+  .tab-bar {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0 0 1rem;
+    border-bottom: 2px solid rgba(47, 80, 97, 0.15);
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-family: var(--font-form);
+    font-size: 1rem;
+    color: var(--color-text);
+    opacity: 0.7;
+    margin-bottom: -2px; /* overlap the bar's border-bottom */
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tab-btn:hover {
+    opacity: 1;
+  }
+
+  .tab-btn.is-active {
+    opacity: 1;
+    border-bottom-color: var(--color-text-hover);
+    font-weight: 600;
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.is-active {
+    display: block;
+  }
+
+  .tab-intro {
+    color: var(--color-text);
+    font-family: var(--font-form);
+    margin: 0 0 1rem;
+    font-size: 0.95em;
+  }
+
+  /* ───── List editor toolbar + pagination ───── */
+  .list-editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 0 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hint {
+    color: var(--color-text);
+    opacity: 0.65;
+    font-size: 0.85em;
+    font-style: italic;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.75rem;
+    background: rgba(47, 80, 97, 0.05);
+    border-radius: 6px;
+  }
+
+  .page-indicator {
+    font-family: var(--font-form);
+    font-size: 0.95em;
+    color: var(--color-text);
+    text-align: center;
+    flex: 1;
+  }
+
+  .page-indicator strong {
+    color: var(--color-text-hover);
+    font-size: 1.1em;
+  }
+
+  .muted {
+    opacity: 0.65;
+    font-size: 0.85em;
   }
 
   .settings-section {
