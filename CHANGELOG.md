@@ -4,6 +4,46 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-08-30 — OpenCode web UI setup, AI-WORKFLOW doc, last DC-CST fixes
+
+### Added
+
+- `docs/HANDOFF.md` — full project brief a fresh session can read in
+  ~3 minutes and be productive. Includes the exact prompt the user
+  pastes to start a session.
+- `docs/AI-WORKFLOW.md` — when to install which opencode plugin
+  (current site: nothing; new codebases: obra/superpowers; big
+  refactors: oh-my-opencode-slim temporarily).
+- `docs/PERMANENCE.md` filled in (Cloudflare registrar, 6 June 2027
+  renewal, son/daughter as GitHub designated successor, GitLab mirror
+  + local backup as action items).
+- `docs/sessions/2026-08-30.md` — same-day log of the morning
+  session.
+
+### Fixed (final)
+
+- 為 → 爲 (data/list.env item 74) — Traditional variant, in DC-CST.
+- 錄 → 録 (data/list.env item 89) — Japanese shinjitai, in DC-CST.
+  After this, no DC-CST-missing char is rendered in a DC-CST context.
+
+### Operations (outside the repo)
+
+- OpenCode web UI deployed on the Proxmox LXC at
+  `http://192.168.1.40:3000` (LAN IP, systemd service, auto-restart).
+  Auth via `OPENCODE_SERVER_PASSWORD` env var. Started with
+  `opencode web --port 3000 --hostname 0.0.0.0 --pure`; the
+  `--pure` flag skips OpenCode's hosted-service billing check.
+- The user will switch to this web UI for future sessions
+  (iPhone-friendly chat + screenshot paste + file upload).
+
+### Documentation
+
+- `docs/HANDOFF.md` is the canonical "start here" brief for any
+  future AI session on this project.
+- `docs/AI-WORKFLOW.md` is the canonical "what plugin to install
+  when" reference.
+- `docs/PERMANENCE.md` updated to link to both new docs.
+
 ## 2026-08-29 — Responsive design overhaul + wenwrite font
 
 ### Added
