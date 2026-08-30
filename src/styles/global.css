@@ -98,16 +98,30 @@ body {
   margin: 0 auto;
   padding: 0.5rem;
   background-color: transparent;
-  backdrop-filter: blur(var(--bg-overlay-blur));
-  -webkit-backdrop-filter: blur(var(--bg-overlay-blur));
   border-radius: 0;
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
   /* Container query: the header responds to its OWN width, not viewport.
      This is cleaner than viewport media queries for a fixed-size
      component. */
   container-type: inline-size;
   container-name: site-header;
+}
+
+/* The blurred backdrop sits BEHIND the header content (photo + text).
+   It carries the mask gradient that fades the blur into the page — but
+   the photo and text are NOT masked, so the photo always reads as
+   fully opaque. Without this split, list text scrolling behind the
+   lower portion of the header appeared to "show through" the photo
+   because the mask was clipping the whole header element (including
+   its children). */
+.site-header__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(var(--bg-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--bg-overlay-blur));
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
 }
 
 .site-header__inner {
