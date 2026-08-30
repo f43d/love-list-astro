@@ -168,7 +168,7 @@ body {
 .site-header__subtitle {
   margin: 0.5rem 0 0;
   color: var(--color-text);
-  font-size: clamp(0.8rem, 0.65rem + 0.4vw, 0.9rem);
+  font-size: clamp(0.95rem, 0.7rem + 0.6vw, 1.2rem);
 }
 
 /* === Short viewports (e.g. iPhone landscape): even bigger header.
@@ -191,7 +191,7 @@ body {
     font-size: clamp(1.6rem, 1.05rem + 1.2vw, 1.85rem);
   }
   .site-header__subtitle {
-    font-size: clamp(1.3rem, 0.95rem + 1vw, 1.6rem);
+    font-size: clamp(1.6rem, 1.05rem + 1.2vw, 1.85rem);
     margin: 0.35rem 0 0;
   }
 }
