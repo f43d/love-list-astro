@@ -152,3 +152,11 @@ they're the place to start.
 
 _Last filled in: 2026-08-30 (morning, end-of-day docs)._
 _Last reviewed: 2026-08-29._
+
+## Related docs in this repo
+
+- [`docs/HANDOFF.md`](./HANDOFF.md) — brief for the next AI session on this
+  project. Read first.
+- [`docs/AI-WORKFLOW.md`](./AI-WORKFLOW.md) — when to install which
+  opencode plugin (oh-my-opencode-slim, obra/superpowers, etc.). Read
+  before starting any new project.
