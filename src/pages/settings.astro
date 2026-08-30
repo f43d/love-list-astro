@@ -1,23 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="Settings" description="Owner-only settings for buc.ketli.st" showHeader={true}>
+<Base title="" description="" showHeader={true}>
   <a id="top"></a>
   <article class="page settings-page">
-    <h1 class="page__title">Settings</h1>
-    <p class="settings-warning">
-      🔒 <strong>Owner-only.</strong> This page is hidden from public links. All edits
-      commit directly to the GitHub repo via the API. Changes go live after the
-      GitHub Action deploys (~30 s).
-    </p>
 
     <!-- ───── Auth (above tabs) ───── -->
     <section id="auth-section" class="settings-section auth-bar">
+      <div class="road-closed" role="img" aria-label="Access required">
+        <div class="road-closed__panel">Road Closed</div>
+      </div>
       <div id="auth-prompt" class="auth-bar__prompt">
-        <label for="pat-input" class="auth-bar__label">Paste a PAT with <code>Contents: Read and write</code> on <code>f43d/love-list-astro</code></label>
         <div class="row">
-          <input type="password" id="pat-input" placeholder="github_pat_..." autocomplete="off" spellcheck="false" />
-          <button id="connect-btn" class="btn btn-primary">Connect</button>
+          <label for="pat-input" class="visually-hidden">Access token</label>
+          <input type="password" id="pat-input" placeholder="Access token" autocomplete="off" spellcheck="false" />
+          <button id="connect-btn" class="btn btn-primary">Submit</button>
         </div>
         <p id="auth-status" class="status"></p>
       </div>
@@ -160,7 +157,7 @@ async function connect() {
   setAuthStatus('Verifying…');
   const result = await verifyPat(entered);
   if (!result.ok) {
-    setAuthStatus(`Token rejected: ${result.error}.`, true);
+    setAuthStatus('Token rejected.', true);
     return;
   }
   pat = entered;
@@ -706,27 +703,52 @@ tryAutoReconnect();
 </script>
 
 <style>
-  .settings-warning {
-    background: rgba(229, 127, 132, 0.15);
-    border: 1px solid var(--color-text-hover);
+  /* ───── Road closed sign (unauthenticated state) ───── */
+  .road-closed {
+    background: repeating-linear-gradient(
+      135deg,
+      #f4c20d 0,
+      #f4c20d 25%,
+      #111 25%,
+      #111 50%
+    );
+    background-size: 40px 40px;
+    padding: 2rem 1rem;
+    border: 4px solid #111;
     border-radius: 8px;
-    padding: 0.75rem 1rem;
+    margin: 0 0 1.5rem;
     text-align: center;
-    color: var(--color-text);
-    font-family: var(--font-form);
-    margin: 0 0 2rem;
+  }
+
+  .road-closed__panel {
+    display: inline-block;
+    background: #f4c20d;
+    border: 3px solid #111;
+    padding: 0.6rem 1.4rem;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: #111;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 #111;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   /* ───── Auth bar (compact, above tabs) ───── */
   .auth-bar {
     padding: 0.75rem 1rem;
-  }
-
-  .auth-bar__label {
-    display: block;
-    font-size: 0.9em;
-    color: var(--color-text);
-    margin-bottom: 0.4rem;
   }
 
   .auth-bar__connected {
