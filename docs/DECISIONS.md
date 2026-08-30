@@ -259,3 +259,25 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - The `serializeGallery` / `serializeList` helpers in `settingsClient.ts` are NOT forward-compatible by design (they always emit the full schema). If a row in `gallery.env` is added with an extra column, it'll round-trip fine via the parser, but writing it back will collapse the extras into the last field. This is acceptable for the current use case (the /settings/ page only edits known fields).
 - **Cost to revisit**: if multi-row data migrations become common, consider versioning the format (e.g. `## v1.0` header comment in the env file) and teaching the parser to migrate older versions on read.
 - **Captured by**: the post-end-of-day regression where 89 bucket list items silently disappeared because the field count was bumped to 5 in the refactor without a corresponding data-file migration. Fixed in commit `47210fa`.
+
+## 2026-08-30 — Bucket list editable from the settings page
+
+- **Decision**: extend the existing `/settings/` page with a new section 4 ("Edit bucket list") that lets the owner edit each item's `text` and `checked` flag from a form. One Save button per row → one GitHub commit per save. Section 3 ("Bucket list links", photo selector for checked items) stays unchanged.
+- **Context**: until now, editing the bucket list required opening `data/list.env` in the GitHub web UI and hand-editing pipe-separated rows. The owner wanted a UI path for typo fixes and marking items done without leaving the settings page.
+- **Editable surface**: `checked` (checkbox) + `text` (input). The `link` (external URL) and `photo` (gallery id) fields are intentionally not editable here — `link` rarely changes; `photo` is handled by section 3.
+- **Display rule**: rows with empty `text` after trim are omitted from the editor (and from the public list, since `BucketList.astro` renders what it's given). Matches the data-file-is-source-of-truth convention. Items absent from `data/list.env` (NN 90–97) are naturally omitted the same way.
+- **Rejected**:
+  - **One Save-all button at the top** — batches edits into one commit but breaks the per-row pattern (photo rows + section 3 both use per-row Save).
+  - **Auto-save on blur** — harder to review before commit; extra status indicators; not worth it for an owner-only tool.
+  - **Inline photo-selector in the new section, deleting section 3** — cleaner UX but bigger refactor for small gain; user accepted additive scope.
+  - **Refuse to save if `text` is empty** — doesn't match "blank hides the item" semantics the user wanted.
+  - **Auto-delete the row when `text` is blanked** — would free up NNs for reuse, but the user said "no rearrange"; reusing NNs may surprise future-you when scrolling git history.
+  - **Paginate the 100 rows** — overkill for an owner-only tool; browser scroll is fine.
+  - **Add an "Add new item" sub-form** — out of scope; the user said "no rearrange" and the NN 90–97 gap is intentionally preserved.
+- **Consequence**:
+  - Settings page is now the canonical editor for `text` + `checked`. `data/list.env` remains source of truth, but the owner no longer needs to hand-edit it for routine changes.
+  - One commit per row (message `list: update item NN`). Acceptable at this scale; revisit if item count grows or batch edits become common.
+  - Empty `text` after save removes the row from the editor view (and from the public list once deployed).
+  - `npx astro check` → 0 errors, 0 warnings. `npm run build` → 5 pages clean.
+- **Cost to revisit**: bulk-edit (one-shot Save-all) if multi-row fixes become common; "Add item" sub-form if NN 90–97 should ever be filled; per-session commits if the per-row cadence becomes noisy in git history.
+- **Files touched**: `src/pages/settings.astro` (markup + script + CSS).

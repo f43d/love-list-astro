@@ -66,6 +66,13 @@ import Base from '../layouts/Base.astro';
       <p>Link each checked item to one photo. Visitors clicking that item will deep-link to the photo in the gallery lightbox.</p>
       <div id="bucket-links" class="bucket-links"></div>
     </section>
+
+    <!-- ───── 4. Bucket list editor (hidden until connected) ───── -->
+    <section id="list-editor-section" class="settings-section" hidden>
+      <h2>4. Edit bucket list</h2>
+      <p>Mark items done or edit their title. Blank text hides the item from the public list. Sorted by NN; rows with blank text are not shown.</p>
+      <div id="list-editor" class="list-editor"></div>
+    </section>
   </article>
 </Base>
 
@@ -94,8 +101,10 @@ const disconnectBtn = $('disconnect-btn');
 const authStatus = $('auth-status');
 const manageSection = $('manage-section');
 const linksSection = $('links-section');
+const listEditorSection = $('list-editor-section');
 const photosList = $('photos-list');
 const bucketLinks = $('bucket-links');
+const listEditor = $('list-editor');
 
 // ───── Auth ─────
 async function tryAutoReconnect() {
@@ -140,6 +149,7 @@ function disconnect() {
   disconnectBtn.hidden = true;
   manageSection.hidden = true;
   linksSection.hidden = true;
+  listEditorSection.hidden = true;
 }
 
 function onAuthenticated(user: string) {
@@ -148,6 +158,7 @@ function onAuthenticated(user: string) {
   disconnectBtn.hidden = false;
   manageSection.hidden = false;
   linksSection.hidden = false;
+  listEditorSection.hidden = false;
   loadAll().catch((e) => setAuthStatus(`Load failed: ${e}`, true));
 }
 
@@ -167,6 +178,7 @@ async function loadAll() {
   await Promise.all([loadGallery(), loadList()]);
   renderPhotos();
   renderBucketLinks();
+  renderListEditor();
 }
 
 async function loadGallery() {
@@ -465,6 +477,78 @@ async function saveBucketLink(num: string) {
   }
 }
 
+// ───── Bucket list editor ─────
+function renderListEditor() {
+  listEditor.innerHTML = '';
+  // Show only items with non-empty text, sorted by NN.
+  const visible = listItems
+    .filter((li) => li.text.trim() !== '')
+    .sort((a, b) => a.id - b.id);
+
+  if (visible.length === 0) {
+    listEditor.innerHTML = '<p class="status">No items to show. Add rows to data/list.env or refresh.</p>';
+    return;
+  }
+
+  for (const li of visible) {
+    const row = document.createElement('div');
+    row.className = 'list-editor-row';
+    row.dataset.num = li.num;
+
+    row.innerHTML = `
+      <input type="checkbox" class="le-check" ${li.checked ? 'checked' : ''} aria-label="Done" />
+      <span class="le-num">${escapeHtml(li.num)}</span>
+      <input type="text" class="le-text" value="${escapeAttr(li.text)}" placeholder="(blank hides the item)" />
+      <button class="btn btn-primary le-save">Save</button>
+      <span class="status le-status"></span>
+    `;
+    listEditor.appendChild(row);
+
+    row.querySelector('.le-save')!.addEventListener('click', () => saveListItem(li.num));
+  }
+}
+
+async function saveListItem(num: string) {
+  const row = listEditor.querySelector<HTMLElement>(`.list-editor-row[data-num="${num}"]`);
+  if (!row) return;
+  const newText = row.querySelector<HTMLInputElement>('.le-text')!.value.trim();
+  const newChecked = row.querySelector<HTMLInputElement>('.le-check')!.checked;
+  const status = row.querySelector<HTMLElement>('.le-status')!;
+
+  const li = listItems.find((x) => x.num === num);
+  if (!li) return;
+  const wasChecked = li.checked;
+  const wasText = li.text;
+  li.text = newText;
+  li.checked = newChecked;
+
+  status.textContent = 'Saving…';
+  status.className = 'status';
+  try {
+    listFile = await getFile('data/list.env', pat);
+    const content = serialiseList(listItems);
+    const sha = await putFile('data/list.env', content, listFile!.sha, `list: update item ${num}`, pat);
+    listFile = { path: 'data/list.env', content, sha };
+    status.textContent = '✓ Saved';
+    status.className = 'status status-ok';
+
+    // If checked state changed, refresh section 3 (it only shows checked items).
+    if (wasChecked !== newChecked) renderBucketLinks();
+
+    // If the user blanked an item's text, remove it from the editor view
+    // (matches "blank content is omitted as the current way").
+    if (newText === '' && wasText !== '') {
+      row.remove();
+    }
+  } catch (e) {
+    // Revert in-memory change so the UI matches the on-disk truth.
+    li.text = wasText;
+    li.checked = wasChecked;
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
 // ───── Helpers ─────
 function extractHeader(content: string): string {
   const lines = content.split('\n');
@@ -730,6 +814,50 @@ tryAutoReconnect();
     font-size: 0.9em;
   }
 
+  /* List editor */
+  .list-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 1rem 0;
+  }
+
+  .list-editor-row {
+    display: grid;
+    grid-template-columns: auto 3em 1fr auto auto;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    background: white;
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .le-check {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: var(--color-text-hover);
+    cursor: pointer;
+  }
+
+  .le-num {
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: right;
+  }
+
+  .le-text {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid rgba(47, 80, 97, 0.3);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-text);
+    background: white;
+    min-width: 0;
+  }
+
   @media (max-width: 768px) {
     .photo-row {
       grid-template-columns: 1fr;
@@ -740,6 +868,13 @@ tryAutoReconnect();
     }
     .bucket-num {
       text-align: left;
+    }
+    .list-editor-row {
+      grid-template-columns: auto 3em 1fr auto;
+    }
+    .list-editor-row .le-status {
+      grid-column: 1 / -1;
+      margin-left: 0.25rem;
     }
   }
 </style>

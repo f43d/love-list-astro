@@ -19,6 +19,15 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   + local backup as action items).
 - `docs/sessions/2026-08-30.md` — same-day log of the morning
   session.
+- **`/settings/` page can now edit the bucket list** — new section
+  4 ("Edit bucket list") with one row per item: checkbox + text
+  input + Save button. One GitHub commit per row (message
+  `list: update item NN`). Rows with empty text are hidden from
+  the editor and from the public list, matching the
+  data-file-is-source-of-truth convention. The `link` (external
+  URL) and `photo` (gallery id) fields are intentionally not
+  editable here — section 3 already handles `photo`, and `link`
+  rarely changes.
 
 ### Fixed (final)
 
