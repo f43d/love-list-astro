@@ -149,13 +149,14 @@ body {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.5);
-  /* Feather: a 3-stop white halo that fades into the page background,
-     mimicking a ~5–10px Photoshop feather around the border so the
-     photo reads as embedded rather than pasted on top. */
+  /* Feather: a 4-stop white halo spanning ~6–30px so the photo's
+     edge fades softly into the page background. Mimics a ~20px
+     Photoshop feather — strong near the border, fading outward. */
   box-shadow:
-    0 0 4px rgba(255, 255, 255, 0.5),
-    0 0 10px rgba(255, 255, 255, 0.25),
-    0 0 18px rgba(255, 255, 255, 0.1);
+    0 0 6px rgba(255, 255, 255, 0.55),
+    0 0 14px rgba(255, 255, 255, 0.4),
+    0 0 22px rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(255, 255, 255, 0.08);
   flex: 0 0 auto;
 }
 
