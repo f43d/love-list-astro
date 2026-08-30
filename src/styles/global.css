@@ -28,6 +28,7 @@
   /* colours */
   --color-text: #2f5061;
   --color-text-hover: #e57f84;
+  --color-text-focal: #c4364a;
   --color-divider: silver;
   --color-footer: #111;
 
@@ -276,7 +277,9 @@ body {
 .list-item__check-spacer { width: clamp(0.4rem, 0.5rem + 0.5vw, 0.75rem); flex: 0 0 auto; }
 .list-item__num-spacer  { width: clamp(0.5rem, 0.5rem + 0.5vw, 1rem);    flex: 0 0 auto; }
 
-/* Scroll-driven focal effect — unchanged logic, just fluid sizes. */
+/* Scroll-driven focal effect — applies to every list item (checked and
+   unchecked). Both share the same font-size so checked rows stop
+   appearing smaller than unchecked ones. */
 @keyframes list-focus {
   0%, 100% {
     transform: scale(1);
@@ -285,13 +288,13 @@ body {
   }
   50% {
     transform: scale(1.45);
-    color: var(--color-text-hover);
+    color: var(--color-text-focal);
     opacity: 1;
   }
 }
 
-.list-item:not(.is-checked) .list-item__num,
-.list-item:not(.is-checked) .list-item__text {
+.list-item__num,
+.list-item__text {
   font-size: clamp(1rem, 0.55rem + 1.2vw, 1.65rem);
   line-height: 1.5;
   color: var(--color-text);
@@ -300,8 +303,6 @@ body {
   animation-timeline: view();
   animation-range: cover;
 }
-
-.list-item__num { font-size: clamp(1.1rem, 0.6rem + 1.4vw, 1.85rem); }
 
 .list-item__text:hover { color: var(--color-text-hover); }
 
