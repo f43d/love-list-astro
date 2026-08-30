@@ -29,6 +29,26 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
   editable here — section 3 already handles `photo`, and `link`
   rarely changes.
 
+### Changed (UI polish, evening)
+
+- **Header subtitle font-size** now matches title in all viewports
+  (default, landscape, portrait) — was smaller in two of three blocks.
+- **Header mask gradient** softened from a hard 70 % cutoff to a
+  4-stop fade so the bottom 30 % no longer reads as a separate layer.
+- **Header backdrop / content split** — the blur-backdrop and mask
+  now live on a dedicated `.site-header__backdrop` behind the
+  content, so the hero photo is never see-through and the list text
+  scrolling past the header stays consistently behind it.
+- **Bucket list focal zoom** bumped from 1.3× → 1.45× and now uses
+  `--color-text-focal: #c4364a` (deeper coral than the hover
+  accent) for more contrast at the focal peak.
+- **Bucket list checked items** now share the same font-size and
+  focal animation as unchecked items (previously inherited body 1 rem
+  and skipped the animation).
+- **Hero photo border** now has a 4-stop white-halo feather
+  (~20 px reach) so the edge fades into the page background instead
+  of reading as a cut-and-paste ring.
+
 ### Changed (settings page)
 
 - `/settings/` restructured into 3 tabs: **List editor** (default),
