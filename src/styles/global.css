@@ -102,8 +102,8 @@ body {
   backdrop-filter: blur(var(--bg-overlay-blur));
   -webkit-backdrop-filter: blur(var(--bg-overlay-blur));
   border-radius: 0;
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 50%, rgba(0, 0, 0, 0.4) 85%, transparent 100%);
   /* Container query: the header responds to its OWN width, not viewport.
      This is cleaner than viewport media queries for a fixed-size
      component. */
