@@ -406,7 +406,10 @@ body::before {
 
 .content-text {
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 0.6rem + 1.1vw, 1.7rem);
+  /* Preferred and max scaled by 1.2× (mobile stays the same at the
+     min because 1.15rem is below the preferred value on small viewports;
+     desktop grows by ~20 %). */
+  font-size: clamp(1.15rem, 0.72rem + 1.32vw, 2.04rem);
   line-height: clamp(1.65, 0.7rem + 1.5vw, 2);
   color: var(--color-text);
   margin-bottom: 3rem;
