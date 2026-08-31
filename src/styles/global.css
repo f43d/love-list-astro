@@ -110,8 +110,10 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
-  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   background-color: #faf3e0 !important;
   background-image: url('/images/background.jpg') !important;
