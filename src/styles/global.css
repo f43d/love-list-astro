@@ -85,26 +85,21 @@ a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
 
 /* === Background ===
-   The wallpaper is held on a `position: fixed` pseudo-element rather
-   than on body directly because:
-   - body { background-attachment: fixed } has known iOS WebKit bugs
-     (the image doesn't paint, leaving a black gap).
-   - body { background-attachment: scroll } works on iOS but the
-     wallpaper scrolls with content and on long pages like
-     /100-reasons-why/ shows a cream band below the body's height.
-   - A fixed pseudo-element is always pinned to the viewport regardless
-     of scroll position; iOS WebKit renders fixed-position elements
-     (other than body backgrounds) more reliably.
-   body keeps a cream background-color as the always-visible fallback.
-   !important on the pseudo-element rules defeats iOS WebKit's
-   auto-dark stylesheet that was forcing the page to render black. */
+   Three explicit layers, top to bottom in z-order:
+     1. body in-flow content (text, list items) — default paint order
+     2. body::before (wallpaper) — z-index: -1, fixed to viewport
+     3. html bg (cream) — always paints last so something is visible
+   Cream sits on HTML (not body) so it doesn't compete with the
+   pseudo-element's z-index: -1 paint slot. If the wallpaper fails to
+   render for any reason (iOS WebKit bug, slow load), the cream
+   shows through — never a black or transparent viewport. */
 html {
   background-color: #faf3e0 !important;
   color-scheme: only light !important;
 }
 
 body {
-  background-color: #faf3e0 !important;
+  background-color: transparent;
 }
 
 body::before {
@@ -114,8 +109,8 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
+  z-index: -1;
   pointer-events: none;
-  background-color: #faf3e0 !important;
   background-image: url('/images/background.jpg') !important;
   background-size: cover !important;
   background-position: 50% !important;
