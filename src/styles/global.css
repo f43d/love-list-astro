@@ -393,6 +393,12 @@ body::before {
     font-size: clamp(1.15rem, 0.8rem + 0.7vw, 1.4rem);
     margin-top: 0.25rem;
   }
+  /* Extra breathing room around the text block in portrait —
+     more space between the photo (above) and the counter, and between
+     the subtitle (below) and the list content sliding up underneath. */
+  .site-header__text {
+    padding: 0.75rem 0 1rem;
+  }
 }
 
 .page__title {
