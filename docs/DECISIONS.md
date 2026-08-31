@@ -302,3 +302,17 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   - `npx astro check` → 0 errors, 0 warnings. `npm run build` → 5 pages clean.
 - **Cost to revisit**: if item count exceeds ~200, the page size of 10 may feel too small (consider 20 or a jump-to-NN control); if the user ever wants to "save all changes at once", revisit per-row commits.
 - **Files touched**: `src/pages/settings.astro` (template + script + CSS).
+
+## 2026-08-31 — Don't chase iOS Firefox dark-mode fix
+
+- **Decision**: accept iOS Firefox's auto-dark rendering of the site as a known limitation. Don't keep iterating on CSS fixes.
+- **Context**: iPhone Firefox was rendering the site with a black background and auto-darkened text, despite Firefox's own dark-mode setting being off. Verified working correctly on macOS Firefox (where the bulk of the owner's browsing happens) and Android Firefox (verified during this session by installing on the owner's phone).
+- **What was tried** (5 commits in this session, all in `src/styles/global.css` and `src/layouts/Base.astro`):
+  1. `color-scheme: light` meta + body `background-color` fallback + `background-attachment: scroll` on mobile.
+  2. `color-scheme: only light` in meta AND in CSS `:root`, `background-color` on html AND body, dropped `fixed` everywhere.
+  3. Moved wallpaper to `position: fixed` body::before with `inset: 0`, `z-index: -1`.
+  4. Replaced `inset: 0` with explicit `width: 100vw; height: 100vh`, removed `z-index: -1`.
+  5. Three-layer z-stack: `html bg: cream`, `body bg: transparent`, `body::before: z-index: -1` — finally correct on macOS/Android, but iPhone Firefox STILL paints black.
+- **Why stop**: the site is for ~5 family visitors; the rendering issue is on ONE browser (iOS Firefox specifically, not even all iOS browsers — Safari renders correctly). Each additional fix attempt risks regressing the working browsers. Cost-benefit is against more iteration.
+- **Consequence**: visitors using iPhone Firefox will see the site with a black background. This is acceptable per the owner.
+- **Cost to revisit**: only if the owner adopts iPhone Firefox as their primary browser, or if a future iOS WebKit update breaks the Safari rendering too.

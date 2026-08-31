@@ -4,6 +4,32 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-08-31 — OpenChamber installed (morning), iOS Firefox dark-mode investigation + UI tweaks (evening)
+
+### Added (morning)
+
+- **OpenChamber 1.22.0** installed alongside `opencode-web` on the
+  Proxmox LXC at `http://192.168.1.40:3001/`. Same PAT as the opencode-web
+  service. Documented in `docs/sessions/2026-08-31.md`.
+
+### Changed (evening)
+
+- **Theme: light-mode enforcement for the wallpaper.** html + body now
+  explicitly use the warm cream `#faf3e0`; the wallpaper lives on a
+  fixed-position body::before with `z-index: -1` so the three layers
+  stack correctly (html bg → wallpaper → body content). Verified
+  working on macOS Firefox + Android Firefox. Known limitation:
+  iOS Firefox still renders with a black background — accepted per
+  `docs/DECISIONS.md` "Don't chase iOS Firefox dark-mode fix".
+- **`.content-text` font** on `/100-reasons-why/` bumped ~20 % on
+  desktop (`clamp(1.15rem, 0.72rem + 1.32vw, 2.04rem)`); mobile stays
+  the same at the 1.15 rem min.
+- **`.site-header__text` padding in portrait** — 12 px top + 16 px
+  bottom inside the portrait @media block for breathing room around
+  the title lines (no change to photo or text sizes).
+
+---
+
 ## 2026-08-30 — OpenCode web UI setup, AI-WORKFLOW doc, last DC-CST fixes
 
 ### Added
