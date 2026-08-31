@@ -25,6 +25,11 @@
 
 /* === Design tokens === */
 :root {
+  /* Force light scheme on browsers that auto-dark (iOS WebKit's
+     "Automatic Dark Mode" applies regardless of meta tag unless
+     CSS color-scheme is also set on :root/html). */
+  color-scheme: only light;
+
   /* colours */
   --color-text: #2f5061;
   --color-text-hover: #e57f84;
@@ -80,28 +85,29 @@ a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
 
 /* === Background ===
-   background-color is the fallback that shows up if background.jpg fails
-   to load (iOS WebKit has known issues with background-attachment: fixed,
-   and some browsers treat the body as transparent → fall through to
-   their dark-mode default which would render the page black).
+   Three layers of light-mode enforcement for iOS WebKit:
+   1. html + body have an explicit warm-cream background-color (#faf3e0)
+      so nothing falls through to a dark-mode default if background.jpg
+      fails to load (which iOS WebKit does for background-attachment: fixed
+      in many cases).
+   2. background-attachment: fixed is removed entirely — iOS WebKit's
+      known bug is the most likely root cause of the page rendering as
+      black on iPhone Firefox. The parallax-like effect is small on a
+      phone anyway.
+   3. color-scheme: only light on :root (above) signals to iOS WebKit's
+      auto-dark mode that the page is explicitly light-only.
    #faf3e0 is a warm paper tone that matches the handwritten DC-CST
    aesthetic. */
-body {
+html, body {
   background-color: #faf3e0;
+}
+
+body {
   background-image: url('/images/background.jpg');
   background-size: cover;
   background-position: 50%;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-
-/* iOS WebKit misrenders background-attachment: fixed (the image fails to
-   paint at all in many cases). On phones the parallax effect isn't
-   useful anyway, so switch to scroll. */
-@media (max-width: 768px) {
-  body {
-    background-attachment: scroll;
-  }
+  background-attachment: scroll;
 }
 
 /* === Header — fluid sizes, container query for layout === */
