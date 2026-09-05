@@ -316,3 +316,46 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
 - **Why stop**: the site is for ~5 family visitors; the rendering issue is on ONE browser (iOS Firefox specifically, not even all iOS browsers — Safari renders correctly). Each additional fix attempt risks regressing the working browsers. Cost-benefit is against more iteration.
 - **Consequence**: visitors using iPhone Firefox will see the site with a black background. This is acceptable per the owner.
 - **Cost to revisit**: only if the owner adopts iPhone Firefox as their primary browser, or if a future iOS WebKit update breaks the Safari rendering too.
+
+## 2026-09-05 — CSS radial-gradient mask for the hero feather (not a feathered PNG)
+
+- **Decision**: feather the round hero photo with a CSS
+  `radial-gradient(circle closest-side, …)` mask on the plain
+  `profile.jpg`, instead of exporting a feathered PNG.
+- **Context**: the owner wanted a soft Photoshop-style feather around
+  the round hero so it blends into the wallpaper. Two hand-exported
+  feathered PNGs were tried first; both looked un-feathered because
+  their alpha only faded to ~161 (63% opaque) at the edge rather than
+  to 0. Rather than keep re-exporting, the feather moved entirely into
+  CSS — no image edit required, instantly tunable via the gradient stop.
+- **Rejected**:
+  - **Feathered PNG export** — hard to control the alpha falloff in
+    consumer editors (Photopea/Pixlr both lost the circular alpha);
+    every retune needs a re-export. Kept in repo but unreferenced.
+  - **`radial-gradient(circle, …)` without `closest-side`** — defaults
+    to `farthest-corner`, so the transparent zone lands outside the
+    visible border-radius circle and NO feather shows (the bug that
+    shipped in 65ef8c9 and was fixed in 0c4805b).
+- **Consequence**: feather width is now a one-line CSS change (the
+  50% stop; higher = thinner, lower = wider). Works in iOS Safari via
+  the `-webkit-mask-image` prefix. The old 4-stop box-shadow halo was
+  already removed; no border is needed.
+- **Cost to revisit**: if a future visual direction wants a NON-circular
+  or non-gradient edge, a crafted image is again the tool.
+
+## 2026-09-05 — Header title shadow is responsive + set on the parent
+
+- **Decision**: header text shadows (counter / title / subtitle) are
+  set once on `.site-header__text` (the parent) and inherited, with
+  viewport-tuned strengths: full at ≥769 px, softer ≤768 px, subtlest
+  ≤600 px.
+- **Context**: three lines sit over a busy wallpaper. A shadow that
+  looks right at desktop font sizes looks heavy at small mobile fonts,
+  so it must scale down. Setting it per-selector left the 3rd line
+  without a shadow on iOS for unknown element-specific reasons;
+  text-shadow is inherited, so putting it on the parent is both
+  simpler and uniform.
+- **Consequence**: one text-shadow rule per breakpoint, all three lines
+  guaranteed identical. Tuning is one value per breakpoint.
+- **Cost to revisit**: if a future design separates the three lines
+  onto different backgrounds, per-line shadows would return.

@@ -4,6 +4,21 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-05 (evening) — Hero feather via CSS mask + header title shadows
+
+### Changed
+
+- **Hero photo feather** — the round header photo now fades softly into
+  the wallpaper via a CSS `radial-gradient` mask instead of a hard
+  edge (no image edit needed; plain `profile.jpg`).
+- **Hero photo is ~20–25% larger on desktop** (PC / Mac ≥1200px wide).
+- **Header title lines** (counter / title / subtitle) now have a soft
+  drop shadow so they read clearly over the wallpaper. The shadow is
+  responsive — full strength on desktop / tablets, scaled down on
+  phones so it never looks heavy on small fonts.
+
+---
+
 ## 2026-08-31 — OpenChamber installed (morning), iOS Firefox dark-mode investigation + UI tweaks (evening)
 
 ### Added (morning)

@@ -1,4 +1,8 @@
 ---
+/* Approved-blessings wall (public). Loads data/blessings.env newest-first
+   and renders each blessing with a zh-Hant locale date. This list only
+   ever contains APPROVED entries — the GitHub Issue moderation flow
+   appends to blessings.env; nothing visitor-facing is unmoderated. */
 import { loadBlessingsNewestFirst } from '../lib/parseBlessings';
 
 const items = loadBlessingsNewestFirst();

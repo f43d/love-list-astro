@@ -1,4 +1,8 @@
 ---
+/* Gallery page (/gallery/). Route shell: counts photos from
+   data/gallery.env for the meta line, then defers all grid + lightbox
+   behaviour to <Gallery>. Each photo is addressable via a URL fragment
+   (#NN) so a checked bucket item can deep-link into the lightbox. */
 import Base from '../layouts/Base.astro';
 import Gallery from '../components/Gallery.astro';
 import { loadGallerySorted } from '../lib/parseGallery';

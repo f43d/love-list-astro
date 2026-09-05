@@ -1,4 +1,9 @@
 ---
+/* Comment / blessings page (/comment/). Route shell combining:
+   - <BlessingForm>: visitor-facing submission form, bound to Web3Forms.
+   - <BlessingsWall>: the approved wall, loaded from data/blessings.env.
+   Submissions are moderated BEFORE they appear (form -> email ->
+   GitHub Issue approval -> data/blessings.env -> redeploy). */
 import Base from '../layouts/Base.astro';
 import BlessingForm from '../components/BlessingForm.astro';
 import BlessingsWall from '../components/BlessingsWall.astro';
