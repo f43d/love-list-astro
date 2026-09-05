@@ -177,10 +177,14 @@ body::before {
   aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
-  /* Keep a faint white inner ring for definition against the wallpaper —
-     the real feather is now baked into the PNG via the 30px transparent
-     ring around the rectangular photo's edge. */
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  /* Feather: a radial-gradient mask fades the circular edge to fully
+     transparent (alpha 0 at 100%), so the photo blends into the
+     wallpaper. The 70% → 100% gradient is the feather width —
+     shrink toward ~85% for a thinner feather, toward ~55% for a wider
+     one. Using the CSS mask means no feathered PNG is needed; the
+     plain profile.jpg works. */
+  -webkit-mask-image: radial-gradient(circle, black 70%, transparent 100%);
+  mask-image: radial-gradient(circle, black 70%, transparent 100%);
   flex: 0 0 auto;
 }
 
