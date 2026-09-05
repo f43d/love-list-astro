@@ -200,24 +200,21 @@ body::before {
   }
 }
 
-.site-header__text { text-align: left; }
-
-/* Soft shadow under the three header lines (counter, title, subtitle) so
-   the teal text lifts off the busy wallpaper instead of blending in.
-   Full strength on desktop / Mac / large tablets (≥ 769px). Scaled down
-   on smaller screens via the media blocks below, because fixed-pixel
-   shadow offsets look oversized against the smaller mobile fonts. */
-.counter,
-.site-header__title,
-.site-header__subtitle {
+.site-header__text {
+  text-align: left;
+  /* Shadow set on the PARENT so it inherits to every text line below
+     (text-shadow is an inherited property). Setting it per-line left a
+     case where the 3rd line (subtitle) rendered without a shadow on
+     iOS; inheritance removes any element-specific gap. Full strength on
+     desktop / Mac / large tablets (>=769px), scaled down via the media
+     blocks below because fixed-pixel offsets look oversized on the
+     smaller mobile fonts. */
   text-shadow: 2px 3px 4px rgba(0, 0, 0, 0.35), 4px 6px 14px rgba(0, 0, 0, 0.2);
 }
 
 /* Tablet-ish / iPad mini portrait (~744px) and below: noticeably softer. */
 @media (max-width: 768px) {
-  .counter,
-  .site-header__title,
-  .site-header__subtitle {
+  .site-header__text {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25), 2px 3px 8px rgba(0, 0, 0, 0.15);
   }
 }
@@ -225,9 +222,7 @@ body::before {
 /* Small phones (≤600px, i.e. all iPhones in portrait): the subtlest shadow —
    a single soft offset. */
 @media (max-width: 600px) {
-  .counter,
-  .site-header__title,
-  .site-header__subtitle {
+  .site-header__text {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
   }
 }
