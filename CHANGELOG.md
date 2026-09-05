@@ -30,6 +30,26 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-05 — Hero photo replaced with feathered PNG
+
+### Changed
+
+- **Hero photo** (`src/components/Header.astro`) now uses a 900 ×900
+  PNG with a 30 px transparent ring around the rectangular edge
+  instead of the original JPEG. CSS clips the square to a circle
+  via `border-radius: 50%`, so the rectangle's feather becomes the
+  visible circle's feather — a "natural" Photoshop-feather look
+  without a CSS halo.
+- **CSS `box-shadow` on `.site-header__photo`** removed (4-stop white
+  halo). The PNG's own feather replaces it. Kept the 2 px white
+  border for definition.
+- **Hero image src includes a cache-bust query string**
+  (`?v=20260905`) — GitHub Pages serves `/images/*` with
+  `max-age=31536000`; without the cache-buster iOS Safari was
+  showing the cached pre-deploy image.
+
+---
+
 ## 2026-08-30 — OpenCode web UI setup, AI-WORKFLOW doc, last DC-CST fixes
 
 ### Added
