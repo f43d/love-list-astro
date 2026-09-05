@@ -178,13 +178,15 @@ body::before {
   border-radius: 50%;
   object-fit: cover;
   /* Feather: a radial-gradient mask fades the circular edge to fully
-     transparent (alpha 0 at 100%), so the photo blends into the
-     wallpaper. The 70% → 100% gradient is the feather width —
-     shrink toward ~85% for a thinner feather, toward ~55% for a wider
-     one. Using the CSS mask means no feathered PNG is needed; the
-     plain profile.jpg works. */
-  -webkit-mask-image: radial-gradient(circle, black 70%, transparent 100%);
-  mask-image: radial-gradient(circle, black 70%, transparent 100%);
+     transparent. `circle closest-side` makes the gradient's 100% point
+     land exactly on the border-radius circle's edge (the square's
+     nearest side). Without closest-side the gradient defaults to
+     farthest-corner (the square's corner), pushing the transparent
+     zone outside the visible circle — no feather, hard edge.
+     70% → 100% is the feather width: raise toward ~85% for thinner,
+     lower toward ~55% for wider. */
+  -webkit-mask-image: radial-gradient(circle closest-side, black 70%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, black 70%, transparent 100%);
   flex: 0 0 auto;
 }
 
