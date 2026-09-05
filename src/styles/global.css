@@ -191,7 +191,24 @@ body::before {
   flex: 0 0 auto;
 }
 
+/* Desktop (PC / Mac) only — hero photo ~20–25 % bigger. min-width:1200px
+   keeps tablets (incl. iPad landscape 1024px) on the base size. */
+@media (min-width: 1200px) {
+  .site-header__photo {
+    width: clamp(6rem, 18.5vw, 14rem);
+    height: clamp(6rem, 18.5vw, 14rem);
+  }
+}
+
 .site-header__text { text-align: left; }
+
+/* Soft shadow under the three header lines (counter, title, subtitle) so
+   the teal text lifts off the busy wallpaper instead of blending in. */
+.counter,
+.site-header__title,
+.site-header__subtitle {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
 
 .counter {
   font-size: clamp(1.125rem, 0.5rem + 1.5vw, 1.5rem);
