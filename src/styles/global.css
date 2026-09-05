@@ -183,10 +183,11 @@ body::before {
      nearest side). Without closest-side the gradient defaults to
      farthest-corner (the square's corner), pushing the transparent
      zone outside the visible circle — no feather, hard edge.
-     70% → 100% is the feather width: raise toward ~85% for thinner,
-     lower toward ~55% for wider. */
-  -webkit-mask-image: radial-gradient(circle closest-side, black 70%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side, black 70%, transparent 100%);
+     50% → 100% = the outer half of the radius fades out. Raise the
+     stop toward ~70% for a thinner feather, lower toward ~35% for a
+     wider one. */
+  -webkit-mask-image: radial-gradient(circle closest-side, black 50%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, black 50%, transparent 100%);
   flex: 0 0 auto;
 }
 
