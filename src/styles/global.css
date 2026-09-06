@@ -839,12 +839,42 @@ dialog.lightbox img {
 .lightbox__nav--prev:hover { transform: translateY(-50%) translateX(-3px); }
 .lightbox__nav--next:hover { transform: translateY(-50%) translateX(3px); }
 
-/* === Bucket list photo hint === */
+/* === Bucket list photo/video badges === */
+.list-item__badges {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.list-item__badges .list-item__photo-icon {
+  margin-left: 0;
+}
 .list-item__photo-icon {
   margin-left: auto;
   font-size: 0.95em;
   opacity: 0.6;
   transition: opacity 0.2s ease;
+}
+.list-item__video-icon {
+  font-size: 0.8em;
+  color: var(--color-text-hover);
+  border: 1px solid var(--color-text-hover);
+  border-radius: 50%;
+  width: 1.5em;
+  height: 1.5em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding-left: 0.1em;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.list-item__video-icon:hover,
+.list-item__video-icon:focus-visible {
+  background: var(--color-text-hover);
+  color: white;
+  opacity: 1;
 }
 
 .list-item__text--has-photo { font-weight: 600; }

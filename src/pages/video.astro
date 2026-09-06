@@ -1,0 +1,223 @@
+---
+/* Video page (/video/). One <video> element shared by all clips.
+   A clip is chosen from the list (or deep-linked via #NN, e.g. from a
+   bucket-list item's ▶ icon). Everything is client side; data comes from
+   data/videos.env. */
+import Base from '../layouts/Base.astro';
+import { loadVideosSorted } from '../lib/parseVideos';
+import { loadList } from '../lib/parseList';
+
+const videos = loadVideosSorted();
+const items = loadList();
+const itemText: Record<string, string> = {};
+for (const it of items) itemText[it.num] = it.text;
+
+const clips = videos.map((v) => ({
+  num: v.num,
+  file: v.file,
+  caption: v.caption,
+  date: v.date,
+  item: v.item,
+  itemText: v.item ? itemText[v.item] ?? '' : '',
+}));
+---
+
+<Base title="Video" description="Video clips from the bucket list." showHeader={true}>
+  <a id="top"></a>
+  <article class="page video-page">
+    <p class="video-page__back"><a href="/">← 返回主頁</a></p>
+    <h1 class="page__title">Video Clips</h1>
+    <p class="video-page__meta">
+      {clips.length} {clips.length === 1 ? 'clip' : 'clips'}
+    </p>
+
+    {clips.length === 0 ? (
+      <p class="video-page__empty">暫未有影片。主頁完成清單後，在 /settings 加上影片。</p>
+    ) : (
+      <>
+        <div class="video-player-wrap">
+          <video
+            id="video-player"
+            controls
+            preload="metadata"
+            playsinline
+          ></video>
+          <p id="video-label" class="video-player-label" aria-live="polite"></p>
+        </div>
+
+        <ul class="video-list" aria-label="Clips">
+          {clips.map((c) => (
+            <li>
+              <button
+                class="video-list__btn"
+                data-num={c.num}
+                data-file={c.file}
+                data-caption={c.caption}
+                data-item={c.itemText}
+                data-date={c.date}
+              >
+                <span class="video-list__icon">▶</span>
+                <span class="video-list__text">
+                  {c.itemText || c.caption || `#${c.num}`}
+                </span>
+                <span class="video-list__meta">
+                  {c.itemText ? `${c.item} · ${c.caption}` : c.caption}
+                  {c.date ? ` · ${c.date}` : ''}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </article>
+</Base>
+
+<script>
+  const player = document.getElementById('video-player') as HTMLVideoElement | null;
+  const label = document.getElementById('video-label');
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.video-list__btn'));
+
+  function labelParts(item: string, caption: string, date: string): string {
+    const parts: string[] = [];
+    if (item) parts.push(item);
+    if (caption) parts.push(caption);
+    if (date) parts.push(date);
+    return parts.join(' · ');
+  }
+
+  function playClip(num: string) {
+    const btn = buttons.find((b) => b.dataset.num === num);
+    if (!btn || !player) return;
+    const file = btn.dataset.file ?? '';
+    if (!file) return;
+    player.src = file;
+    player.load();
+    const text = labelParts(btn.dataset.item ?? '', btn.dataset.caption ?? '', btn.dataset.date ?? '');
+    if (label) label.textContent = text || `Clip #${num}`;
+    for (const b of buttons) b.classList.toggle('is-active', b === btn);
+    player.play().catch(() => {});
+    if (window.location.hash !== `#${num}`) {
+      history.replaceState(null, '', `#${num}`);
+    }
+  }
+
+  for (const btn of buttons) {
+    btn.addEventListener('click', () => playClip(btn.dataset.num ?? ''));
+  }
+
+  // Deep-link / video/#NN (e.g. from a bucket-list ▶ icon) selects + plays it.
+  const initial = window.location.hash.replace('#', '');
+  if (initial) {
+    playClip(initial);
+  } else if (buttons.length > 0) {
+    playClip(buttons[0].dataset.num ?? '');
+  }
+</script>
+
+<style>
+  .video-page__back {
+    font-family: var(--font-hand);
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+  }
+  .video-page__back a {
+    color: var(--color-text-hover);
+    transition: opacity 0.2s ease;
+  }
+  .video-page__back a:hover,
+  .video-page__back a:focus-visible {
+    opacity: 0.65;
+  }
+
+  .video-page__meta,
+  .video-page__empty {
+    font-family: var(--font-hand);
+    color: var(--color-text);
+    opacity: 0.7;
+    text-align: center;
+    font-size: 0.95em;
+  }
+  .video-page__empty {
+    font-style: italic;
+    margin-top: 1.5rem;
+  }
+
+  .video-player-wrap {
+    max-width: 720px;
+    margin: 1rem auto 2rem;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+  }
+  .video-player-wrap video {
+    display: block;
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    aspect-ratio: 16 / 9;
+  }
+  .video-player-label {
+    font-family: var(--font-hand);
+    color: var(--color-text);
+    text-align: center;
+    margin: 0.5rem 0 0.25rem;
+    font-size: 1.05em;
+    min-height: 1.4em;
+  }
+
+  .video-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .video-list__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    cursor: pointer;
+    font-family: var(--font-hand);
+    color: var(--color-text);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .video-list__btn:hover {
+    background: rgba(255, 255, 255, 0.85);
+  }
+  .video-list__btn.is-active {
+    background: rgba(229, 127, 132, 0.15);
+    border-color: var(--color-text-hover);
+  }
+  .video-list__icon {
+    color: var(--color-text-hover);
+    font-size: 0.85em;
+    flex: 0 0 auto;
+  }
+  .video-list__text {
+    font-weight: 600;
+  }
+  .video-list__meta {
+    margin-left: auto;
+    font-size: 0.85em;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 55%;
+  }
+  @media (max-width: 600px) {
+    .video-list__meta {
+      max-width: 45%;
+    }
+  }
+</style>

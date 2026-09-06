@@ -7,13 +7,13 @@
  * api.github.com.
  * ========================================================================== */
 
-import type { BucketItem, GalleryItem } from './types';
+import type { BucketItem, GalleryItem, VideoItem } from './types';
 import { formatBytes, escapeHtml } from './utils';
 
 const REPO = 'f43d/love-list-astro';
 const API = 'https://api.github.com';
 
-export type { BucketItem, GalleryItem };
+export type { BucketItem, GalleryItem, VideoItem };
 
 export interface GithubFile {
   path: string;
@@ -211,6 +211,43 @@ export function serialiseGallery(
   const header = existingHeader || GALLERY_HEADER;
   const body = items
     .map((it) => [it.num, it.date, it.location, it.caption, it.url].join('|'))
+    .join('\n');
+  return header + body + '\n';
+}
+
+const VIDEOS_HEADER = [
+  '# Video clips — pipe-separated (.env style)',
+  '# Format: NN|date|caption|file|item',
+  '#   NN      : two-digit id, zero-padded',
+  '#   date    : YYYY-MM-DD (when the clip was filmed; can be empty)',
+  '#   caption : free text (brief description)',
+  '#   file    : repo path served under /videos/ (e.g. /videos/01.mp4) or a full URL',
+  '#   item    : bucket-list item number this clip belongs to (two-digit, or empty)',
+  "# Lines beginning with '#' are ignored.",
+  '',
+].join('\n');
+
+export function parseVideos(text: string): VideoItem[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => l.split('|'))
+    .filter((p) => p.length >= 4)
+    .map(([num, date, caption, file, item]) => ({
+      num: num.trim().padStart(2, '0'),
+      id: Number.parseInt(num, 10),
+      date: (date ?? '').trim(),
+      caption: (caption ?? '').trim(),
+      file: (file ?? '').trim(),
+      item: (item ?? '').trim(),
+    }));
+}
+
+export function serialiseVideos(items: VideoItem[], existingHeader = ''): string {
+  const header = existingHeader || VIDEOS_HEADER;
+  const body = items
+    .map((it) => [it.num, it.date, it.caption, it.file, it.item].join('|'))
     .join('\n');
   return header + body + '\n';
 }

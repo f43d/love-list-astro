@@ -1,9 +1,16 @@
 ---
 import { loadListSorted } from '../lib/parseList';
+import { loadVideos } from '../lib/parseVideos';
 import { pickRandomInt } from '../lib/utils';
 import type { BucketItem } from '../lib/types';
 
 const items: BucketItem[] = loadListSorted();
+
+// Map bucket item num → attached clip num (data/videos.env "item" column).
+const videoByItem: Record<string, string> = {};
+for (const v of loadVideos()) {
+  if (v.item) videoByItem[v.item] = v.num;
+}
 ---
 
 <!-- The main bucket list. Each item picks one of four checkbox SVG
@@ -44,9 +51,20 @@ const items: BucketItem[] = loadListSorted();
           target={isExternal ? '_blank' : undefined}
           rel={isExternal ? 'noopener noreferrer' : undefined}
         >{item.text}</a>
-        {item.checked && item.photo && (
-          <span class="list-item__photo-icon" aria-hidden="true">📷</span>
-        )}
+        {(item.checked && item.photo) || videoByItem[item.num] ? (
+          <span class="list-item__badges">
+            {item.checked && item.photo && (
+              <span class="list-item__photo-icon" aria-hidden="true">📷</span>
+            )}
+            {videoByItem[item.num] && (
+              <a
+                class="list-item__video-icon"
+                href={`/video/#${videoByItem[item.num]}`}
+                aria-label={`觀看影片 #${videoByItem[item.num]}`}
+              >▶</a>
+            )}
+          </span>
+        ) : null}
       </div>
     );
   })}

@@ -29,6 +29,7 @@ import Base from '../layouts/Base.astro';
       <button class="tab-btn is-active" data-tab="list-editor" role="tab" aria-selected="true">📝 List editor</button>
       <button class="tab-btn" data-tab="list-links" role="tab" aria-selected="false">🔗 List links</button>
       <button class="tab-btn" data-tab="photos" role="tab" aria-selected="false">📷 Photos</button>
+      <button class="tab-btn" data-tab="videos" role="tab" aria-selected="false">🎬 Videos</button>
     </nav>
 
     <!-- ───── Panels container (hidden until connected) ───── -->
@@ -87,6 +88,43 @@ import Base from '../layouts/Base.astro';
         </details>
       </section>
 
+      <!-- Panel: Videos -->
+      <section id="panel-videos" class="tab-panel" data-tab-panel="videos" role="tabpanel" hidden>
+        <p class="tab-intro">Attach a short mp4 clip to a bucket-list item. The clip can be uploaded from this computer (saved to <code>/public/videos/</code>) or reference a file already in that folder. Clips play on the <a href="/video/" rel="noopener noreferrer">/video/</a> page.</p>
+        <div id="videos-list" class="video-list"></div>
+        <details class="add-video">
+          <summary>➕ Add a new video</summary>
+          <div class="add-video__form">
+            <div class="row">
+              <label>Bucket item this clip shows
+                <select id="new-video-item"></select>
+              </label>
+            </div>
+            <div class="row">
+              <label>Caption
+                <input type="text" id="new-video-caption" placeholder="e.g. 悉尼歌劇院碼頭" />
+              </label>
+              <label>Date
+                <input type="date" id="new-video-date" />
+              </label>
+            </div>
+            <div class="row">
+              <label class="video-source-opt"><input type="radio" name="video-source" value="upload" checked /> Upload a file from this computer</label>
+              <label class="video-source-opt"><input type="radio" name="video-source" value="existing" /> File already in <code>public/videos/</code></label>
+            </div>
+            <div class="row">
+              <input type="file" id="new-video-file" accept="video/mp4,video/*" />
+              <input type="text" id="new-video-path" placeholder="/videos/clip.mp4 or clip.mp4" hidden />
+            </div>
+            <div id="new-video-preview" class="video-preview"></div>
+            <div class="row">
+              <button id="add-video-btn" class="btn btn-primary" disabled>Save video</button>
+              <span id="add-video-status" class="status"></span>
+            </div>
+          </div>
+        </details>
+      </section>
+
     </div>
   </article>
 </Base>
@@ -96,16 +134,19 @@ import {
   verifyPat, setPat, getPat, clearPat,
   getFile, putFile, putBinaryFile, deleteFile, getBinaryFileSha,
   parseGallery, serialiseGallery, parseList, serialiseList,
+  parseVideos, serialiseVideos,
   processImage, formatBytes,
-  type GalleryItem, type BucketItem, type GithubFile,
+  type GalleryItem, type BucketItem, type VideoItem, type GithubFile,
 } from '../lib/settingsClient';
 
 // ───── State ─────
 let pat = '';
 let gallery: GalleryItem[] = [];
 let listItems: BucketItem[] = [];
+let videos: VideoItem[] = [];
 let galleryFile: GithubFile | null = null;
 let listFile: GithubFile | null = null;
+let videosFile: GithubFile | null = null;
 
 const PAGE_SIZE = 10;
 let currentListPage = 0;
@@ -125,6 +166,7 @@ const tabsRoot = $('tabs-root');
 const tabBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab-btn'));
 const tabPanels = Array.from(document.querySelectorAll<HTMLElement>('.tab-panel'));
 const photosList = $('photos-list');
+const videosList = $('videos-list');
 const bucketLinks = $('bucket-links');
 const listEditor = $('list-editor');
 const addItemBtn = $<HTMLButtonElement>('add-item-btn');
@@ -220,8 +262,9 @@ patInput.addEventListener('keydown', (e) => {
 
 // ───── Load all data ─────
 async function loadAll() {
-  await Promise.all([loadGallery(), loadList()]);
+  await Promise.all([loadGallery(), loadList(), loadVideosData()]);
   renderPhotos();
+  renderVideos();
   renderBucketLinks();
   renderListEditor();
 }
@@ -238,6 +281,13 @@ async function loadList() {
   if (!file) throw new Error('Could not read data/list.env');
   listFile = file;
   listItems = parseList(file.content);
+}
+
+async function loadVideosData() {
+  const file = await getFile('data/videos.env', pat);
+  if (!file) throw new Error('Could not read data/videos.env');
+  videosFile = file;
+  videos = parseVideos(file.content);
 }
 
 // ───── Render photos ─────
@@ -370,6 +420,241 @@ async function deletePhoto(num: string) {
     status.textContent = `✗ ${String(e)}`;
   }
 }
+
+// ───── Videos ─────
+const newVideoItem = $<HTMLSelectElement>('new-video-item');
+const newVideoCaption = $<HTMLInputElement>('new-video-caption');
+const newVideoDate = $<HTMLInputElement>('new-video-date');
+const newVideoFile = $<HTMLInputElement>('new-video-file');
+const newVideoPath = $<HTMLInputElement>('new-video-path');
+const newVideoPreview = $('new-video-preview');
+const addVideoBtn = $('add-video-btn') as HTMLButtonElement;
+const addVideoStatus = $('add-video-status');
+
+let videoSource: 'upload' | 'existing' = 'upload';
+let pickedVideoFile: File | null = null;
+
+function videoOptionsHtml(selected: string): string {
+  const sorted = [...listItems].sort((a, b) => a.id - b.id);
+  const parts: string[] = ['<option value="">— none —</option>'];
+  for (const it of sorted) {
+    const sel = it.num === selected ? ' selected' : '';
+    parts.push(`<option value="${escapeAttr(it.num)}"${sel}>${escapeHtml(it.num)} · ${escapeHtml(it.text || '(blank)')}</option>`);
+  }
+  return parts.join('');
+}
+
+function fillNewVideoItemSelect() {
+  newVideoItem.innerHTML = videoOptionsHtml(newVideoItem.value);
+}
+
+async function commitVideos() {
+  if (!videosFile) return;
+  const content = serialiseVideos(videos, extractHeader(videosFile.content));
+  const fresh = await getFile('data/videos.env', pat);
+  const sha = fresh ? fresh.sha : videosFile.sha;
+  await putFile('data/videos.env', content, sha, 'videos: update metadata', pat);
+  videosFile = { path: 'data/videos.env', content, sha: '' };
+}
+
+function renderVideos() {
+  fillNewVideoItemSelect();
+  videosList.innerHTML = '';
+  if (videos.length === 0) {
+    videosList.innerHTML = '<p class="status">No videos yet. Add one below, or reference a file already in <code>public/videos/</code>.</p>';
+    return;
+  }
+  const sorted = [...videos].sort((a, b) => a.id - b.id);
+  for (const v of sorted) {
+    const row = document.createElement('div');
+    row.className = 'video-row';
+    row.dataset.num = v.num;
+    row.innerHTML = `
+      <div class="video-fields">
+        <label>ID <input type="text" class="v-num" value="${escapeAttr(v.num)}" readonly /></label>
+        <label>Bucket item
+          <select class="v-item">${videoOptionsHtml(v.item)}</select>
+        </label>
+        <label>Date <input type="date" class="v-date" value="${escapeAttr(v.date)}" /></label>
+        <label>Caption <input type="text" class="v-cap" value="${escapeAttr(v.caption)}" /></label>
+        <label>File <input type="text" class="v-file" value="${escapeAttr(v.file)}" /></label>
+      </div>
+      <div class="row actions">
+        <button class="btn btn-primary v-save">Save metadata</button>
+        <a class="btn btn-secondary v-open" href="/video/#${escapeAttr(v.num)}" target="_blank" rel="noopener noreferrer">▶ Play</a>
+        <button class="btn btn-danger v-delete">Delete video</button>
+        <span class="status v-status"></span>
+      </div>
+    `;
+    videosList.appendChild(row);
+    row.querySelector('.v-save')!.addEventListener('click', () => saveVideoRow(v.num));
+    row.querySelector('.v-delete')!.addEventListener('click', () => deleteVideoRow(v.num));
+  }
+}
+
+async function saveVideoRow(num: string) {
+  const row = videosList.querySelector<HTMLElement>(`.video-row[data-num="${num}"]`)!;
+  const item = row.querySelector<HTMLSelectElement>('.v-item')!.value;
+  const date = row.querySelector<HTMLInputElement>('.v-date')!.value;
+  const caption = row.querySelector<HTMLInputElement>('.v-cap')!.value.trim();
+  const file = row.querySelector<HTMLInputElement>('.v-file')!.value.trim();
+  const status = row.querySelector<HTMLElement>('.v-status')!;
+  const v = videos.find((x) => x.num === num);
+  if (!v) return;
+  v.item = item;
+  v.date = date;
+  v.caption = caption;
+  v.file = file;
+  status.textContent = 'Saving…';
+  status.className = 'status';
+  try {
+    await commitVideos();
+    status.textContent = '✓ Saved';
+    status.className = 'status status-ok';
+    renderVideos();
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+async function deleteVideoRow(num: string) {
+  const v = videos.find((x) => x.num === num);
+  if (!v) return;
+  if (!confirm(`Delete clip ${num} (${v.caption || v.file})?`)) return;
+  const status = videosList.querySelector<HTMLElement>(`.video-row[data-num="${num}"] .v-status`)!;
+  status.textContent = 'Deleting…';
+  status.className = 'status';
+  try {
+    // Remove the clip file too if it lives in the repo.
+    if (v.file.startsWith('/videos/')) {
+      const repoPath = `public${v.file}`;
+      try {
+        const sha = await getBinaryFileSha(repoPath, pat);
+        if (sha) await deleteFile(repoPath, sha, `videos: remove clip ${num}`, pat);
+      } catch { /* file may not exist — fine */ }
+    }
+    videos = videos.filter((x) => x.num !== num);
+    await commitVideos();
+    status.textContent = '✓ Deleted';
+    renderVideos();
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+function nextVideoNum(): number {
+  const used = videos.map((v) => v.id).filter(Number.isFinite);
+  let n = 1;
+  const set = new Set(used);
+  while (set.has(n)) n++;
+  return n;
+}
+
+function readFileBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function normalizeVideoPath(raw: string): string {
+  let s = raw.trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (!s.startsWith('/')) s = `/videos/${s}`;
+  if (!s.startsWith('/videos/')) return '';
+  return s;
+}
+
+for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="video-source"]')) {
+  radio.addEventListener('change', () => {
+    videoSource = radio.value === 'existing' ? 'existing' : 'upload';
+    newVideoFile.hidden = videoSource === 'existing';
+    newVideoPath.hidden = videoSource === 'upload';
+    addVideoBtn.disabled = videoSource === 'upload' ? !pickedVideoFile : newVideoPath.value.trim() === '';
+    addVideoStatus.textContent = '';
+  });
+}
+
+newVideoFile.addEventListener('change', () => {
+  const file = newVideoFile.files?.[0];
+  if (!file) {
+    pickedVideoFile = null;
+    addVideoBtn.disabled = videoSource === 'upload';
+    return;
+  }
+  pickedVideoFile = file;
+  addVideoStatus.textContent = 'Checking…';
+  addVideoStatus.className = 'status';
+  const mb = file.size / (1024 * 1024);
+  if (mb > 90) {
+    addVideoStatus.textContent = `✗ ${formatBytes(file.size)} is too large — GitHub allows files up to 100 MB. Compress it first.`;
+    addVideoStatus.className = 'status status-error';
+    addVideoBtn.disabled = true;
+    return;
+  }
+  newVideoPreview.innerHTML = `<span class="preview__info">✓ ${escapeHtml(file.name)} · ${formatBytes(file.size)}</span>`;
+  addVideoBtn.disabled = false;
+  addVideoStatus.textContent = '';
+});
+
+newVideoPath.addEventListener('input', () => {
+  addVideoBtn.disabled = videoSource === 'existing' && newVideoPath.value.trim() === '';
+});
+
+addVideoBtn.addEventListener('click', async () => {
+  const item = newVideoItem.value;
+  const caption = newVideoCaption.value.trim();
+  const date = newVideoDate.value;
+  addVideoStatus.textContent = 'Saving…';
+  addVideoStatus.className = 'status';
+  addVideoBtn.disabled = true;
+  try {
+    if (!item) throw new Error('Choose a bucket-list item first.');
+    const num = String(nextVideoNum()).padStart(2, '0');
+    let file = '';
+    if (videoSource === 'upload') {
+      if (!pickedVideoFile) throw new Error('Choose an mp4 file to upload.');
+      const base64 = await readFileBase64(pickedVideoFile);
+      const binPath = `public/videos/${num}.mp4`;
+      const existingSha = await getBinaryFileSha(binPath, pat);
+      await putBinaryFile(binPath, base64, existingSha, `videos: upload clip ${num}`, pat);
+      file = `/videos/${num}.mp4`;
+    } else {
+      file = normalizeVideoPath(newVideoPath.value);
+      if (!file) throw new Error('Enter a file path like /videos/01.mp4 (or a full https URL).');
+      if (!/^https?:/i.test(file)) {
+        const sha = await getBinaryFileSha(`public${file}`, pat);
+        if (!sha) throw new Error(`File ${file} not found in the repo — upload it to public/videos/ first, or use the upload option.`);
+      }
+    }
+    const fresh = await getFile('data/videos.env', pat);
+    if (!fresh) throw new Error('Could not read data/videos.env');
+    const cur = parseVideos(fresh.content);
+    cur.push({ num, id: Number.parseInt(num, 10), date, caption, file, item });
+    await putFile('data/videos.env', serialiseVideos(cur, extractHeader(fresh.content)), fresh.sha, `videos: add clip ${num}`, pat);
+    videos = cur;
+    videosFile = { path: 'data/videos.env', content: serialiseVideos(cur, extractHeader(fresh.content)), sha: '' };
+    addVideoStatus.textContent = `✓ Saved as clip ${num}.`;
+    addVideoStatus.className = 'status status-ok';
+    newVideoFile.value = '';
+    newVideoPath.value = '';
+    newVideoCaption.value = '';
+    newVideoDate.value = '';
+    newVideoPreview.innerHTML = '';
+    pickedVideoFile = null;
+    addVideoBtn.disabled = true;
+    renderVideos();
+  } catch (e) {
+    addVideoStatus.textContent = `✗ ${String(e)}`;
+    addVideoStatus.className = 'status status-error';
+    addVideoBtn.disabled = false;
+  }
+});
 
 // ───── Add new photo ─────
 const newPhotoFile = $<HTMLInputElement>('new-photo-file');
@@ -1035,6 +1320,86 @@ tryAutoReconnect();
     border-radius: 4px;
   }
   .preview__info {
+    color: #2d8659;
+    font-size: 0.9em;
+  }
+
+  /* Video list */
+  .video-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .video-list code {
+    background: rgba(47, 80, 97, 0.08);
+    padding: 0.05em 0.3em;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+  }
+  .video-list a { color: var(--color-text-hover); }
+
+  .video-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: white;
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+  .video-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.4rem 1rem;
+  }
+  .video-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85em;
+  }
+  .video-fields input[type="text"].v-file {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+
+  /* Add video */
+  .add-video {
+    background: white;
+    border: 1px dashed rgba(47, 80, 97, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+  }
+  .add-video summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .add-video__form {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .video-source-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+  .video-source-opt code {
+    background: rgba(47, 80, 97, 0.08);
+    padding: 0.05em 0.3em;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+  }
+  .video-preview {
+    margin: 0.25rem 0;
+  }
+  .video-preview .preview__info {
     color: #2d8659;
     font-size: 0.9em;
   }

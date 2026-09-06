@@ -1,8 +1,8 @@
 /* ============================================================================
  * Shared data types.
  *
- * Single source of truth for the three pipe-separated env files
- * (data/list.env, data/gallery.env, data/blessings.env).
+ * Single source of truth for the pipe-separated env files
+ * (data/list.env, data/gallery.env, data/videos.env, data/blessings.env).
  *
  * Used by both server-side (Astro components) and client-side
  * (the /settings/ page) code.
@@ -34,6 +34,19 @@ export interface GalleryItem {
   caption: string;
   /** Full URL or repo-relative path. */
   url: string;
+}
+
+export interface VideoItem {
+  num: string;
+  id: number;
+  /** YYYY-MM-DD when the clip was filmed (optional). */
+  date: string;
+  /** Short description shown under the player. */
+  caption: string;
+  /** Full URL or repo-relative path, e.g. /videos/05.mp4. */
+  file: string;
+  /** Bucket-list item number this clip shows (two-digit, or empty). */
+  item: string;
 }
 
 export interface Blessing {
