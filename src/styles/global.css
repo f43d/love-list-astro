@@ -465,12 +465,15 @@ body::before {
 .content-text--form { font-family: var(--font-form); }
 
 .content-text p { margin: 0 0 1em; }
+.content-text .content-signature {
+  margin-top: 2.5rem;
+  text-align: right;
+}
 .content-text a {
   color: var(--color-text-hover);
   transition: opacity 0.2s ease;
   word-break: break-word;
 }
-
 .content-text a:hover,
 .content-text a:focus-visible {
   opacity: 0.65;
