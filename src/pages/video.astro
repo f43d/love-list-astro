@@ -116,10 +116,7 @@ const clips = videos.map((v) => ({
       const lab = document.createElement('span');
       lab.className = 'video-group-head__label';
       lab.textContent = groupLabel(key, first.itemText);
-      const cnt = document.createElement('span');
-      cnt.className = 'video-group-head__count';
-      cnt.textContent = `${group.length} 條`;
-      head.append(lab, cnt);
+      head.append(lab);
       head.addEventListener('click', () => playClip(first, head));
       listRoot.appendChild(head);
 
