@@ -208,7 +208,8 @@ export function serialiseGallery(
   items: GalleryItem[],
   existingHeader = '',
 ): string {
-  const header = existingHeader || GALLERY_HEADER;
+  let header = existingHeader || GALLERY_HEADER;
+  if (header && !header.endsWith('\n')) header += '\n';
   const body = items
     .map((it) => [it.num, it.date, it.location, it.caption, it.url].join('|'))
     .join('\n');
@@ -245,7 +246,11 @@ export function parseVideos(text: string): VideoItem[] {
 }
 
 export function serialiseVideos(items: VideoItem[], existingHeader = ''): string {
-  const header = existingHeader || VIDEOS_HEADER;
+  let header = existingHeader || VIDEOS_HEADER;
+  // existingHeader comes from extractHeader() which strips the trailing
+  // newline; without a separator the first row would merge into the last
+  // comment line and be ignored by the parser.
+  if (header && !header.endsWith('\n')) header += '\n';
   const body = items
     .map((it) => [it.num, it.date, it.caption, it.file, it.item].join('|'))
     .join('\n');
