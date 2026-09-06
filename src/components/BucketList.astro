@@ -6,11 +6,9 @@ import type { BucketItem } from '../lib/types';
 
 const items: BucketItem[] = loadListSorted();
 
-// Map bucket item num → attached clip num (data/videos.env "item" column).
-const videoByItem: Record<string, string> = {};
-for (const v of loadVideos()) {
-  if (v.item) videoByItem[v.item] = v.num;
-}
+// Bucket items that have at least one clip attached (data/videos.env "item"
+// column). Their ▶ badge deep-links to the item's group on /video/.
+const itemsWithVideos = new Set(loadVideos().map((v) => v.item).filter(Boolean));
 ---
 
 <!-- The main bucket list. Each item picks one of four checkbox SVG
@@ -51,16 +49,16 @@ for (const v of loadVideos()) {
           target={isExternal ? '_blank' : undefined}
           rel={isExternal ? 'noopener noreferrer' : undefined}
         >{item.text}</a>
-        {(item.checked && item.photo) || videoByItem[item.num] ? (
+                {(item.checked && item.photo) || itemsWithVideos.has(item.num) ? (
           <span class="list-item__badges">
             {item.checked && item.photo && (
               <span class="list-item__photo-icon" aria-hidden="true">📷</span>
             )}
-            {videoByItem[item.num] && (
+            {itemsWithVideos.has(item.num) && (
               <a
                 class="list-item__video-icon"
-                href={`/video/#${videoByItem[item.num]}`}
-                aria-label={`觀看影片 #${videoByItem[item.num]}`}
+                href={`/video/#${item.num}`}
+                aria-label={`觀看影片 #${item.num}`}
               >▶</a>
             )}
           </span>

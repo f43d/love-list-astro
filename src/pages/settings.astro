@@ -90,7 +90,7 @@ import Base from '../layouts/Base.astro';
 
       <!-- Panel: Videos -->
       <section id="panel-videos" class="tab-panel" data-tab-panel="videos" role="tabpanel" hidden>
-        <p class="tab-intro">Attach a short mp4 clip to a bucket-list item. The clip can be uploaded from this computer (saved to <code>/public/videos/</code>) or reference a file already in that folder. Clips play on the <a href="/video/" rel="noopener noreferrer">/video/</a> page.</p>
+        <p class="tab-intro">A bucket-list item can have <strong>several</strong> short mp4 clips (e.g. one trip with three clips). Upload from this computer (saved to <code>/public/videos/</code>) or reference a file already there. Pick a bucket item to group the clip under it, or <code>— none —</code> for a standalone clip. All clips play on the <a href="/video/" rel="noopener noreferrer">/video/</a> page, grouped by item.</p>
         <div id="videos-list" class="video-list"></div>
         <details class="add-video">
           <summary>➕ Add a new video</summary>
@@ -430,16 +430,26 @@ const newVideoPath = $<HTMLInputElement>('new-video-path');
 const newVideoPreview = $('new-video-preview');
 const addVideoBtn = $('add-video-btn') as HTMLButtonElement;
 const addVideoStatus = $('add-video-status');
+const addVideoDetails = document.querySelector<HTMLDetailsElement>('details.add-video');
 
 let videoSource: 'upload' | 'existing' = 'upload';
 let pickedVideoFile: File | null = null;
 
+function itemTextFor(num: string): string {
+  const it = listItems.find((x) => x.num === num);
+  return it ? it.text : '';
+}
+
 function videoOptionsHtml(selected: string): string {
   const sorted = [...listItems].sort((a, b) => a.id - b.id);
-  const parts: string[] = ['<option value="">— none —</option>'];
+  const parts: string[] = ['<option value="">— none (standalone) —</option>'];
   for (const it of sorted) {
     const sel = it.num === selected ? ' selected' : '';
     parts.push(`<option value="${escapeAttr(it.num)}"${sel}>${escapeHtml(it.num)} · ${escapeHtml(it.text || '(blank)')}</option>`);
+  }
+  // Keep a selected item that no longer exists in the list as an option.
+  if (selected && !sorted.some((it) => it.num === selected)) {
+    parts.push(`<option value="${escapeAttr(selected)}" selected>${escapeHtml(selected)} · (not in list)</option>`);
   }
   return parts.join('');
 }
@@ -457,39 +467,86 @@ async function commitVideos() {
   videosFile = { path: 'data/videos.env', content, sha: '' };
 }
 
+function buildGroups(): { key: string; label: string; clips: VideoItem[] }[] {
+  const groups = new Map<string, VideoItem[]>();
+  const sorted = [...videos].sort((a, b) => a.id - b.id);
+  for (const v of sorted) {
+    const key = v.item || '';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(v);
+  }
+  const out: { key: string; label: string; clips: VideoItem[] }[] = [];
+  const keys = [...groups.keys()].filter((k) => k !== '').sort((a, b) => Number(a) - Number(b));
+  for (const k of keys) {
+    const txt = itemTextFor(k);
+    out.push({ key: k, label: txt ? `${k} · ${txt}` : `#${k}`, clips: groups.get(k)! });
+  }
+  if (groups.has('')) out.push({ key: '', label: 'Standalone clips', clips: groups.get('')! });
+  return out;
+}
+
 function renderVideos() {
   fillNewVideoItemSelect();
   videosList.innerHTML = '';
-  if (videos.length === 0) {
-    videosList.innerHTML = '<p class="status">No videos yet. Add one below, or reference a file already in <code>public/videos/</code>.</p>';
+  const groups = buildGroups();
+  if (groups.length === 0) {
+    videosList.innerHTML = '<p class="status">No videos yet. Add one below — several clips can share the same bucket item.</p>';
     return;
   }
-  const sorted = [...videos].sort((a, b) => a.id - b.id);
-  for (const v of sorted) {
-    const row = document.createElement('div');
-    row.className = 'video-row';
-    row.dataset.num = v.num;
-    row.innerHTML = `
-      <div class="video-fields">
-        <label>ID <input type="text" class="v-num" value="${escapeAttr(v.num)}" readonly /></label>
-        <label>Bucket item
-          <select class="v-item">${videoOptionsHtml(v.item)}</select>
-        </label>
-        <label>Date <input type="date" class="v-date" value="${escapeAttr(v.date)}" /></label>
-        <label>Caption <input type="text" class="v-cap" value="${escapeAttr(v.caption)}" /></label>
-        <label>File <input type="text" class="v-file" value="${escapeAttr(v.file)}" /></label>
-      </div>
-      <div class="row actions">
-        <button class="btn btn-primary v-save">Save metadata</button>
-        <a class="btn btn-secondary v-open" href="/video/#${escapeAttr(v.num)}" target="_blank" rel="noopener noreferrer">▶ Play</a>
-        <button class="btn btn-danger v-delete">Delete video</button>
-        <span class="status v-status"></span>
-      </div>
-    `;
-    videosList.appendChild(row);
-    row.querySelector('.v-save')!.addEventListener('click', () => saveVideoRow(v.num));
-    row.querySelector('.v-delete')!.addEventListener('click', () => deleteVideoRow(v.num));
+  for (const g of groups) {
+    const block = document.createElement('div');
+    block.className = 'video-group';
+    block.dataset.item = g.key;
+    const head = document.createElement('div');
+    head.className = 'video-group__head';
+    const label = document.createElement('span');
+    label.className = 'video-group__label';
+    label.textContent = g.label;
+    const count = document.createElement('span');
+    count.className = 'video-group__count';
+    count.textContent = `${g.clips.length} 條`;
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'btn btn-secondary video-group__add';
+    more.textContent = '＋ 加多一條';
+    more.addEventListener('click', () => beginAddForItem(g.key));
+    head.append(label, count, more);
+    block.appendChild(head);
+
+    for (const v of g.clips) {
+      const row = document.createElement('div');
+      row.className = 'video-row';
+      row.dataset.num = v.num;
+      row.innerHTML = `
+        <div class="video-fields">
+          <label>ID <input type="text" class="v-num" value="${escapeAttr(v.num)}" readonly /></label>
+          <label>Bucket item <select class="v-item">${videoOptionsHtml(v.item)}</select></label>
+          <label>Date <input type="date" class="v-date" value="${escapeAttr(v.date)}" /></label>
+          <label>Caption <input type="text" class="v-cap" value="${escapeAttr(v.caption)}" /></label>
+          <label>File <input type="text" class="v-file" value="${escapeAttr(v.file)}" /></label>
+        </div>
+        <div class="row actions">
+          <button class="btn btn-primary v-save">Save metadata</button>
+          <a class="btn btn-secondary v-open" href="/video/#${escapeAttr(g.key || v.num)}" target="_blank" rel="noopener noreferrer">▶ Play</a>
+          <button class="btn btn-danger v-delete">Delete video</button>
+          <span class="status v-status"></span>
+        </div>
+      `;
+      block.appendChild(row);
+      row.querySelector('.v-save')!.addEventListener('click', () => saveVideoRow(v.num));
+      row.querySelector('.v-delete')!.addEventListener('click', () => deleteVideoRow(v.num));
+    }
+    videosList.appendChild(block);
   }
+}
+
+function beginAddForItem(item: string) {
+  fillNewVideoItemSelect();
+  newVideoItem.value = item;
+  addVideoStatus.textContent = '';
+  addVideoStatus.className = 'status';
+  if (addVideoDetails) addVideoDetails.open = true;
+  newVideoCaption.focus();
 }
 
 async function saveVideoRow(num: string) {
@@ -607,14 +664,13 @@ newVideoPath.addEventListener('input', () => {
 });
 
 addVideoBtn.addEventListener('click', async () => {
-  const item = newVideoItem.value;
+  const item = newVideoItem.value; // '' = standalone clip
   const caption = newVideoCaption.value.trim();
   const date = newVideoDate.value;
   addVideoStatus.textContent = 'Saving…';
   addVideoStatus.className = 'status';
   addVideoBtn.disabled = true;
   try {
-    if (!item) throw new Error('Choose a bucket-list item first.');
     const num = String(nextVideoNum()).padStart(2, '0');
     let file = '';
     if (videoSource === 'upload') {
@@ -639,7 +695,7 @@ addVideoBtn.addEventListener('click', async () => {
     await putFile('data/videos.env', serialiseVideos(cur, extractHeader(fresh.content)), fresh.sha, `videos: add clip ${num}`, pat);
     videos = cur;
     videosFile = { path: 'data/videos.env', content: serialiseVideos(cur, extractHeader(fresh.content)), sha: '' };
-    addVideoStatus.textContent = `✓ Saved as clip ${num}.`;
+    addVideoStatus.textContent = item ? `✓ Saved as clip ${num} under item ${item}.` : `✓ Saved as standalone clip ${num}.`;
     addVideoStatus.className = 'status status-ok';
     newVideoFile.value = '';
     newVideoPath.value = '';
@@ -655,7 +711,6 @@ addVideoBtn.addEventListener('click', async () => {
     addVideoBtn.disabled = false;
   }
 });
-
 // ───── Add new photo ─────
 const newPhotoFile = $<HTMLInputElement>('new-photo-file');
 const newPhotoDate = $<HTMLInputElement>('new-photo-date');
@@ -1402,6 +1457,34 @@ tryAutoReconnect();
   .video-preview .preview__info {
     color: #2d8659;
     font-size: 0.9em;
+  }
+
+  .video-group {
+    background: rgba(47, 80, 97, 0.03);
+    border-radius: 10px;
+    padding: 0.6rem;
+  }
+  .video-group__head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0.35rem 0.5rem;
+  }
+  .video-group__label {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .video-group__count {
+    font-size: 0.85em;
+    color: var(--color-text);
+    opacity: 0.6;
+    margin-right: auto;
+  }
+  .video-group .video-row {
+    margin-bottom: 0.6rem;
+  }
+  .video-group .video-row:last-child {
+    margin-bottom: 0;
   }
 
   /* Bucket list links */

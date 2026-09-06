@@ -1,8 +1,8 @@
 ---
-/* Video page (/video/). One <video> element shared by all clips.
-   A clip is chosen from the list (or deep-linked via #NN, e.g. from a
-   bucket-list item's ▶ icon). Everything is client side; data comes from
-   data/videos.env. */
+/* Video page (/video/). One <video> element shared by every clip.
+   Clips are grouped under their bucket-list item (data/videos.env "item"
+   column) so a single trip to Ocean Park can have several clips. Deep-link
+   /video/#<item num> selects that item's group and plays its first clip. */
 import Base from '../layouts/Base.astro';
 import { loadVideosSorted } from '../lib/parseVideos';
 import { loadList } from '../lib/parseList';
@@ -32,7 +32,7 @@ const clips = videos.map((v) => ({
     </p>
 
     {clips.length === 0 ? (
-      <p class="video-page__empty">暫未有影片。主頁完成清單後，在 /settings 加上影片。</p>
+      <p class="video-page__empty">暫未有影片。主頁完成清單後，在 /settings 的 Videos 分頁加上影片。</p>
     ) : (
       <>
         <div class="video-player-wrap">
@@ -43,76 +43,120 @@ const clips = videos.map((v) => ({
             playsinline
           ></video>
           <p id="video-label" class="video-player-label" aria-live="polite"></p>
+          <p class="video-player-home"><a href="/">回到主頁</a></p>
         </div>
 
-        <ul class="video-list" aria-label="Clips">
-          {clips.map((c) => (
-            <li>
-              <button
-                class="video-list__btn"
-                data-num={c.num}
-                data-file={c.file}
-                data-caption={c.caption}
-                data-item={c.itemText}
-                data-date={c.date}
-              >
-                <span class="video-list__icon">▶</span>
-                <span class="video-list__text">
-                  {c.itemText || c.caption || `#${c.num}`}
-                </span>
-                <span class="video-list__meta">
-                  {c.itemText ? `${c.item} · ${c.caption}` : c.caption}
-                  {c.date ? ` · ${c.date}` : ''}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div id="video-list" class="video-list" aria-label="Clips"></div>
       </>
     )}
   </article>
 </Base>
 
+<script id="video-data" type="application/json" set:html={JSON.stringify(clips)} />
+
 <script>
+  type Clip = { num: string; file: string; caption: string; date: string; item: string; itemText: string };
+
   const player = document.getElementById('video-player') as HTMLVideoElement | null;
   const label = document.getElementById('video-label');
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.video-list__btn'));
+  const listRoot = document.getElementById('video-list');
+  const clips = JSON.parse(
+    (document.getElementById('video-data') as HTMLScriptElement).textContent || '[]',
+  ) as Clip[];
 
-  function labelParts(item: string, caption: string, date: string): string {
+  function labelText(c: Clip): string {
     const parts: string[] = [];
-    if (item) parts.push(item);
-    if (caption) parts.push(caption);
-    if (date) parts.push(date);
+    if (c.itemText) parts.push(c.itemText);
+    else if (c.caption) parts.push(`#${c.num}`);
+    if (c.caption) parts.push(c.caption);
+    if (c.date) parts.push(c.date);
     return parts.join(' · ');
   }
 
-  function playClip(num: string) {
-    const btn = buttons.find((b) => b.dataset.num === num);
-    if (!btn || !player) return;
-    const file = btn.dataset.file ?? '';
-    if (!file) return;
-    player.src = file;
+  function groupLabel(item: string, itemText: string): string {
+    if (!item) return 'Standalone clips';
+    return itemText ? `${item} · ${itemText}` : `#${item}`;
+  }
+
+  function playClip(c: Clip, btn?: HTMLElement | null) {
+    if (!player || !c.file) return;
+    player.src = c.file;
     player.load();
-    const text = labelParts(btn.dataset.item ?? '', btn.dataset.caption ?? '', btn.dataset.date ?? '');
-    if (label) label.textContent = text || `Clip #${num}`;
-    for (const b of buttons) b.classList.toggle('is-active', b === btn);
+    if (label) label.textContent = labelText(c);
+    if (listRoot) {
+      for (const b of listRoot.querySelectorAll('.video-list__btn')) {
+        b.classList.toggle('is-active', b === btn);
+      }
+    }
     player.play().catch(() => {});
-    if (window.location.hash !== `#${num}`) {
-      history.replaceState(null, '', `#${num}`);
+    if (window.location.hash !== `#${c.item || c.num}`) {
+      history.replaceState(null, '', `#${c.item || c.num}`);
     }
   }
 
-  for (const btn of buttons) {
-    btn.addEventListener('click', () => playClip(btn.dataset.num ?? ''));
+  function render() {
+    if (!listRoot) return;
+    // Group clips under their item, standalone last.
+    const groups = new Map<string, Clip[]>();
+    for (const c of clips) {
+      const key = c.item || '';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(c);
+    }
+    const keys = [...groups.keys()].filter((k) => k !== '').sort((a, b) => Number(a) - Number(b));
+    const ordered = [...keys.map((k) => [k, groups.get(k)!] as [string, Clip[]])];
+    if (groups.has('')) ordered.push(['', groups.get('')!]);
+
+    listRoot.innerHTML = '';
+    for (const [key, group] of ordered) {
+      const first = group[0];
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'video-group-head';
+      const lab = document.createElement('span');
+      lab.className = 'video-group-head__label';
+      lab.textContent = groupLabel(key, first.itemText);
+      const cnt = document.createElement('span');
+      cnt.className = 'video-group-head__count';
+      cnt.textContent = `${group.length} 條`;
+      head.append(lab, cnt);
+      head.addEventListener('click', () => playClip(first, head));
+      listRoot.appendChild(head);
+
+      for (const c of group) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'video-list__btn';
+        const icon = document.createElement('span');
+        icon.className = 'video-list__icon';
+        icon.textContent = '▶';
+        const text = document.createElement('span');
+        text.className = 'video-list__text';
+        text.textContent = c.caption || (key ? `#${key}` : `clip ${c.num}`);
+        const meta = document.createElement('span');
+        meta.className = 'video-list__meta';
+        meta.textContent = [c.date, c.file.replace(/^\/videos\//, '')].filter(Boolean).join(' · ');
+        btn.append(icon, text, meta);
+        btn.dataset.num = c.num;
+        btn.addEventListener('click', () => playClip(c, btn));
+        listRoot.appendChild(btn);
+      }
+    }
+
+    // Initial selection: #<item num> (from a bucket-list ▶), else a clip #num, else first.
+    let target: Clip | null = null;
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      target = clips.find((c) => c.item === hash) ?? clips.find((c) => c.num === hash) ?? null;
+    }
+    if (!target) target = clips[0] ?? null;
+    if (target) {
+      const btn = listRoot.querySelector<HTMLElement>(`.video-list__btn[data-num="${target.num}"]`);
+      playClip(target, btn);
+    }
   }
 
-  // Deep-link / video/#NN (e.g. from a bucket-list ▶ icon) selects + plays it.
-  const initial = window.location.hash.replace('#', '');
-  if (initial) {
-    playClip(initial);
-  } else if (buttons.length > 0) {
-    playClip(buttons[0].dataset.num ?? '');
-  }
+  render();
 </script>
 
 <style>
@@ -162,19 +206,55 @@ const clips = videos.map((v) => ({
     font-family: var(--font-hand);
     color: var(--color-text);
     text-align: center;
-    margin: 0.5rem 0 0.25rem;
+    margin: 0.5rem 0 0;
     font-size: 1.05em;
     min-height: 1.4em;
   }
+  .video-player-home {
+    text-align: center;
+    margin: 0.25rem 0 0;
+    font-family: var(--font-hand);
+    font-size: 0.9em;
+  }
+  .video-player-home a {
+    color: var(--color-text-hover);
+  }
 
   .video-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 auto;
     max-width: 720px;
+    margin: 0 auto 2rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
+  }
+  .video-group-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(47, 80, 97, 0.15);
+    padding: 0.6rem 0.1rem 0.35rem;
+    margin: 0.75rem 0 0.1rem;
+    cursor: pointer;
+    font-family: var(--font-hand);
+    color: var(--color-text);
+    text-align: left;
+  }
+  .video-group-head:first-child {
+    margin-top: 0;
+  }
+  .video-group-head:hover .video-group-head__label {
+    color: var(--color-text-hover);
+  }
+  .video-group-head__label {
+    font-weight: 600;
+    font-size: 1.05em;
+  }
+  .video-group-head__count {
+    margin-left: auto;
+    font-size: 0.85em;
+    opacity: 0.6;
   }
   .video-list__btn {
     display: flex;
@@ -185,7 +265,7 @@ const clips = videos.map((v) => ({
     background: rgba(255, 255, 255, 0.55);
     border: 1px solid rgba(47, 80, 97, 0.15);
     border-radius: 8px;
-    padding: 0.6rem 0.85rem;
+    padding: 0.55rem 0.85rem;
     cursor: pointer;
     font-family: var(--font-hand);
     color: var(--color-text);
@@ -200,11 +280,12 @@ const clips = videos.map((v) => ({
   }
   .video-list__icon {
     color: var(--color-text-hover);
-    font-size: 0.85em;
+    font-size: 0.8em;
     flex: 0 0 auto;
   }
   .video-list__text {
     font-weight: 600;
+    min-width: 0;
   }
   .video-list__meta {
     margin-left: auto;
@@ -213,11 +294,11 @@ const clips = videos.map((v) => ({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 55%;
+    max-width: 45%;
   }
   @media (max-width: 600px) {
     .video-list__meta {
-      max-width: 45%;
+      max-width: 40%;
     }
   }
 </style>
