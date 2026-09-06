@@ -359,3 +359,30 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   guaranteed identical. Tuning is one value per breakpoint.
 - **Cost to revisit**: if a future design separates the three lines
   onto different backgrounds, per-line shadows would return.
+
+## 2026-09-06 — Gallery photo spec: WebP, 1600px long edge, quality 80–85
+
+- **Decision**: all gallery photos converted to WebP, 1600px on the long
+  edge (native aspect kept), quality 80–85 (82 default).
+- **Context**: owner has ~20 years of photos (JPG → iPhone DNG) to put in
+  the gallery. The grid crops to 4:3 via object-fit:cover; the lightbox
+  maxes at ~82vh — 1600px long edge exceeds both without waste. Matches
+  the existing /settings/ upload pipeline (1600px/0.85) and DECISIONS
+  2026-08-29 (WebP, in-repo).
+- **Rejected**: DNG/raw in the repo (huge); JPEG (bigger files); 2000px
+  (no visual gain at lightbox size, ~30% heavier).
+- **Consequence**: files land ~150–500KB each. Naming slistNN.webp then
+  list<item>.webp on assignment; gallery id + filename are independent
+  (the /settings/ link maps a bucket item to a gallery row, not a name).
+- **Cost to revisit**: only for 4K display or full-res archival.
+
+## 2026-09-06 — Video page: clips grouped per bucket item (parallel session)
+
+- **Decision** (made in a parallel session; recorded here so the log is
+  complete): /video/ hosts clips in data/videos.env, grouped under a
+  bucket item (item column) so one outing can have several clips;
+  /settings/ manages them; deep-link /video/#<item>.
+- **Context**: the owner has real footage (e.g. Ocean Park 2003-10-21
+  clips) to attach to bucket items.
+- **Consequence**: two clips live under item 14 today; more clips can be
+  added per item without schema change.

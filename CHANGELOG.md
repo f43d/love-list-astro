@@ -4,6 +4,28 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-06 (late) — Video clips page + footer/icons polish
+
+### Added
+
+- **/video/** — a clips page that groups video clips under their
+  bucket-list item. Each group can hold several clips (e.g. two clips
+  of 出海睇海豚). Deep-link `/video/#<item>` to jump to an item's clips.
+  Managed via /settings/.
+
+### Changed
+
+- **Footer** — copyright now reads a 2002–current year range, centred,
+  two lines.
+- **Badge + play-button icons** redrawn as modern stroke SVGs.
+
+### Removed
+
+- Berlin test photos removed from the gallery ahead of the owner
+  uploading real photos.
+
+---
+
 ## 2026-09-06 — Vows page date signature + wenwrite font update
 
 ### Added
