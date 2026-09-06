@@ -460,6 +460,20 @@ body::before {
 /* Wenwrite — only for the long-form prose on /100-reasons-why/. */
 .content-text--wenwrite {
   font-family: var(--font-prose);
+  /* Same responsive text-shadow tiers as the site header text, so the
+     handwritten prose stays legible over the wallpaper. Inherits to every
+     paragraph (and the signature) inside the block. */
+  text-shadow: 2px 3px 4px rgba(0, 0, 0, 0.35), 4px 6px 14px rgba(0, 0, 0, 0.2);
+}
+@media (max-width: 768px) {
+  .content-text--wenwrite {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25), 2px 3px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+@media (max-width: 600px) {
+  .content-text--wenwrite {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
+  }
 }
 
 .content-text--form { font-family: var(--font-form); }
@@ -468,19 +482,6 @@ body::before {
 .content-text .content-signature {
   margin-top: 2.5rem;
   text-align: right;
-  /* Same responsive text-shadow tiers as the site header text, so the
-     signature keeps the hand-written look legible over the wallpaper. */
-  text-shadow: 2px 3px 6px rgba(0, 0, 0, 0.5), 6px 9px 20px rgba(0, 0, 0, 0.25);
-}
-@media (max-width: 768px) {
-  .content-text .content-signature {
-    text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.4), 4px 6px 14px rgba(0, 0, 0, 0.2);
-  }
-}
-@media (max-width: 600px) {
-  .content-text .content-signature {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-  }
 }
 .content-text a {
   color: var(--color-text-hover);
