@@ -4,6 +4,24 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-06 — Vows page date signature + wenwrite font update
+
+### Added
+
+- **Signature on /100-reasons-why/** — the vows now close with a
+  right-aligned hand-written `2002年3月　翁强`.
+
+### Changed
+
+- **wenwrite font re-subset** to cover the new digits (`0 2 3`) and name
+  characters (`翁强`); ~84 KB (was ~82 KB). Font URL cache-busted (`?v=2`)
+  so returning browsers fetch the new glyphs instead of the old subset.
+- **Vows prose drop shadow** — the long-form wenwrite text now carries the
+  same soft responsive shadow as the site header for legibility over the
+  wallpaper; lighter on PC/Mac so it doesn't look muddy.
+
+---
+
 ## 2026-09-05 (evening) — Hero feather via CSS mask + header title shadows
 
 ### Changed
