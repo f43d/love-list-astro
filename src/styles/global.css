@@ -465,6 +465,15 @@ body::before {
      paragraph (and the signature) inside the block. */
   text-shadow: 2px 3px 4px rgba(0, 0, 0, 0.35), 4px 6px 14px rgba(0, 0, 0, 0.2);
 }
+/* PC/Mac (mouse/trackpad) only: dial the shadow back — it reads muddy at
+   full strength on crisp desktop text. Wide touch screens (e.g. iPad or an
+   iPhone held landscape) are excluded by the pointer/hover tests, so they
+   keep the tier above. */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .content-text--wenwrite {
+    text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.28), 3px 5px 12px rgba(0, 0, 0, 0.12);
+  }
+}
 @media (max-width: 768px) {
   .content-text--wenwrite {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25), 2px 3px 8px rgba(0, 0, 0, 0.15);
