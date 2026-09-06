@@ -527,7 +527,7 @@ function renderVideos() {
         </div>
         <div class="row actions">
           <button class="btn btn-primary v-save">Save metadata</button>
-          <a class="btn btn-secondary v-open" href="/video/#${escapeAttr(g.key || v.num)}" target="_blank" rel="noopener noreferrer">▶ Play</a>
+          <a class="btn btn-secondary v-open" href="/video/#${escapeAttr(g.key || v.num)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg> Play</a>
           <button class="btn btn-danger v-delete">Delete video</button>
           <span class="status v-status"></span>
         </div>
@@ -1485,6 +1485,12 @@ tryAutoReconnect();
   }
   .video-group .video-row:last-child {
     margin-bottom: 0;
+  }
+  .video-row .v-open svg {
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.08em;
+    margin-right: 0.3em;
   }
 
   /* Bucket list links */

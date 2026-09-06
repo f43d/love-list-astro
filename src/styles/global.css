@@ -856,17 +856,15 @@ dialog.lightbox img {
   transition: opacity 0.2s ease;
 }
 .list-item__video-icon {
-  font-size: 0.8em;
   color: var(--color-text-hover);
   border: 1px solid var(--color-text-hover);
   border-radius: 50%;
-  width: 1.5em;
-  height: 1.5em;
+  width: 1.6em;
+  height: 1.6em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  padding-left: 0.1em;
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -875,6 +873,10 @@ dialog.lightbox img {
   background: var(--color-text-hover);
   color: white;
   opacity: 1;
+}
+.list-item__photo-icon svg,
+.list-item__video-icon svg {
+  display: block;
 }
 
 .list-item__text--has-photo { font-weight: 600; }

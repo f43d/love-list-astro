@@ -126,7 +126,7 @@ const clips = videos.map((v) => ({
         btn.className = 'video-list__btn';
         const icon = document.createElement('span');
         icon.className = 'video-list__icon';
-        icon.textContent = '▶';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="0.55em" height="0.55em"><path d="M8 5.5v13l11-6.5z" /></svg>';
         const text = document.createElement('span');
         text.className = 'video-list__text';
         text.textContent = c.caption || (key ? `#${key}` : `clip ${c.num}`);
@@ -277,7 +277,8 @@ const clips = videos.map((v) => ({
   }
   .video-list__icon {
     color: var(--color-text-hover);
-    font-size: 0.8em;
+    display: inline-flex;
+    align-items: center;
     flex: 0 0 auto;
   }
   .video-list__text {

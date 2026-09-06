@@ -7,7 +7,7 @@ import type { BucketItem } from '../lib/types';
 const items: BucketItem[] = loadListSorted();
 
 // Bucket items that have at least one clip attached (data/videos.env "item"
-// column). Their ▶ badge deep-links to the item's group on /video/.
+// column). Their video badge deep-links to the item's group on /video/.
 const itemsWithVideos = new Set(loadVideos().map((v) => v.item).filter(Boolean));
 ---
 
@@ -52,14 +52,18 @@ const itemsWithVideos = new Set(loadVideos().map((v) => v.item).filter(Boolean))
                 {(item.checked && item.photo) || itemsWithVideos.has(item.num) ? (
           <span class="list-item__badges">
             {item.checked && item.photo && (
-              <span class="list-item__photo-icon" aria-hidden="true">📷</span>
+              <span class="list-item__photo-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></svg>
+              </span>
             )}
             {itemsWithVideos.has(item.num) && (
               <a
                 class="list-item__video-icon"
                 href={`/video/#${item.num}`}
                 aria-label={`觀看影片 #${item.num}`}
-              >▶</a>
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="0.6em" height="0.6em"><path d="M8 5.5v13l11-6.5z" /></svg>
+              </a>
             )}
           </span>
         ) : null}
