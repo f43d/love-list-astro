@@ -22,7 +22,14 @@ let cache: BucketItem[] | null = null;
 
 export function loadList(): BucketItem[] {
   if (cache) return cache;
-  cache = parseLines<BucketItem>(readCached('list.env'), 4, (f) => {
+  // fieldCount=5: every row now has all five columns
+  // (NN|checked|text|link|photo). The older forward-compat hack used
+  // fieldCount=4 so 4-column rows (pre-photo column) still parsed; now
+  // that all 100 rows carry the photo column, an exact 5-field parse is
+  // correct — otherwise the photo id gets merged into link (link becomes
+  // "https://example.com|08", photo is lost) and the photo icon silently
+  // disappears from the public list.
+  cache = parseLines<BucketItem>(readCached('list.env'), 5, (f) => {
     const id = Number.parseInt(f[0], 10);
     if (!Number.isFinite(id)) {
       throw new Error(`Invalid bucket-list line: ${f.join('|')}`);
@@ -33,9 +40,6 @@ export function loadList(): BucketItem[] {
       checked: f[1].toLowerCase() === 'true',
       text: f[2],
       link: f[3],
-      // f[4] is the optional photo id (5th column). If absent (older rows
-      // with only 4 columns), parseLine returns just 4 fields and this
-      // is undefined → treat as empty.
       photo: f[4] ?? '',
     };
   });
