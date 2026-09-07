@@ -73,6 +73,7 @@ Do **not** invent decisions that weren't discussed. If unsure, ask. Prefer to sk
 - **Don't spam token-revoke reminders during an active session.** Remind once at the actual end. See "Token / security reminder policy" below.
 - **Don't add a public link to `/settings/`.** It's owner-only. Visitors must not discover it. See `docs/OPERATIONS.md` §"Settings page".
 - **Don't commit + push without explicit consent in the current turn.** The user may have given a PAT earlier in the session for an earlier push; that does NOT authorise a later push. Commit locally, then ASK before pushing. The user owns the PAT, the push, and the consent for both. See `docs/sessions/2026-09-05.md` §"Mistake recorded this session" for the incident that produced this rule.
+- **Before pushing a change, verify it actually WORKS in the built output — not just that it renders.** A rule that "looks right" in the generated HTML may still be non-functional (e.g. an SVG camera icon that renders but is a decorative `<span>` with no `<a>` wrapper, so clicking it does nothing). For interactive elements, check the built markup has the real behaviour: links are `<a href=…>`, buttons have handlers, deep-links point at the right anchor. Check "does clicking do the thing", not "does it appear". See `docs/sessions/2026-09-07.md` for the incident that produced this rule.
 
 ## Owners / context
 

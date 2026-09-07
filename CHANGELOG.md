@@ -4,6 +4,30 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-07 — First real gallery photos live; photo links fixed
+
+### Fixed
+
+- **Checked items with a linked photo now show a clickable camera icon.**
+  Two bugs had the icons missing / dead on the public home page:
+  - `parseList.ts` merged the photo id into the link field (fieldCount
+    was 4 but every row has 5 columns), so no icons rendered and the
+    text linked to a corrupted URL. Now parses all 5 columns.
+  - The camera icon was a decorative span; clicking it did nothing. It's
+    now a real link to `/gallery/#NN`, matching the video-icon pattern.
+
+### Added
+
+- **First real photos** in the gallery: 太平山頂飲早茶 (05), Glamping (06),
+  櫻花樹下野餐 (08), linked to bucket items 81 / 72 / 39 respectively.
+
+### Removed
+
+- Duplicate Glamping photo (07.webp was byte-identical to 06.webp) and
+  leftover Berlin test thumbnails.
+
+---
+
 ## 2026-09-06 (late) — Video clips page + footer/icons polish
 
 ### Added
