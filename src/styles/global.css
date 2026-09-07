@@ -852,8 +852,14 @@ dialog.lightbox img {
 .list-item__photo-icon {
   margin-left: auto;
   font-size: 0.95em;
-  opacity: 0.6;
+  color: var(--color-text-hover);
   transition: opacity 0.2s ease;
+  text-decoration: none;
+}
+.list-item__photo-icon:hover,
+.list-item__photo-icon:focus-visible {
+  opacity: 0.65;
+  outline: none;
 }
 .list-item__video-icon {
   color: var(--color-text-hover);
