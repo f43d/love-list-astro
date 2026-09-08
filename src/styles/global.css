@@ -870,36 +870,27 @@ dialog.lightbox img {
   opacity: 0.65;
   outline: none;
 }
-/* Photo and video icons share the same ~1.6em footprint so the badges
-   read as one aligned pair. */
-.list-item__photo-icon svg {
+/* Photo and video icons share the same footprint so the badges read as
+   one aligned pair. Both are filled glyphs in the coral accent. */
+.list-item__photo-icon svg,
+.list-item__video-icon svg {
   display: block;
-  width: 1.6em;
-  height: 1.6em;
+  width: 1.5em;
+  height: 1.5em;
 }
 .list-item__video-icon {
   color: var(--color-text-hover);
-  border: 1px solid var(--color-text-hover);
-  border-radius: 50%;
-  width: 1.7em;
-  height: 1.7em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
   text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 .list-item__video-icon:hover,
 .list-item__video-icon:focus-visible {
-  background: var(--color-text-hover);
-  color: white;
-  opacity: 1;
-}
-.list-item__video-icon svg {
-  display: block;
-  width: 0.65em;
-  height: 0.65em;
+  opacity: 0.65;
+  outline: none;
 }
 
 .list-item__text--has-photo { font-weight: 600; }
