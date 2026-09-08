@@ -386,3 +386,26 @@ Append-only. Newest entry at the bottom. Each entry captures one design decision
   clips) to attach to bucket items.
 - **Consequence**: two clips live under item 14 today; more clips can be
   added per item without schema change.
+
+## 2026-09-08 — Blessing approval must explicitly dispatch the Pages deploy
+
+- **Decision**: after `approve-blessing.yml` appends a blessing and
+  pushes, it POSTs a `workflow_dispatch` to `deploy.yml` so the site
+  rebuilds. The action needs `actions: write` permission for that call.
+- **Context**: the first end-to-end test approved a blessing that was
+  committed to the repo but never appeared on the wall. Root cause:
+  GitHub does NOT auto-trigger other workflows from a push made with
+  `GITHUB_TOKEN` (recursion guard). The approve action pushes with the
+  repo's GITHUB_TOKEN, so its own commit never fired the deploy.
+- **Rejected**:
+  - **Give the action a PAT** (contents: write) so its push cascades
+    normally — works but requires storing a personal PAT as a repo
+    secret, an extra credential to rotate.
+  - **Do nothing / manual deploy** — the site is meant to run with the
+    owner doing nothing after an approve click.
+- **Consequence**: approving a blessing is still one click (Issue open →
+  action appends → dispatches deploy → live ~30-60s). Do NOT "simplify"
+  approve-blessing.yml by removing the dispatch step — the GITHUB_TOKEN
+  recursion guard is subtle and easy to trip again.
+- **Cost to revisit**: if GitHub ever changes the recursion behavior, the
+  dispatch can be removed; until then keep it.

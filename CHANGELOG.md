@@ -4,6 +4,39 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-08 — Blessing wall live end-to-end; form validation; photo/video badge icons
+
+### Added
+
+- **Blessing form validation** — name must be letters/CJK/spaces (no
+  digits/symbols), email must match a standard pattern, message capped at
+  300 chars with a live counter. Friendly inline errors in Chinese.
+- **One-click blessing approval** — visitor submissions now carry a
+  pre-built GitHub approval link into the owner's email, so approving is
+  a single click (no copy-pasting). Reject = ignore the email.
+- **/settings/ 💌 Blessings tab** — edit or delete approved blessings.
+
+### Changed
+
+- **New photo/video icons** on the bucket list — filled camera + film
+  icons (owner-chosen), coral-coloured, aligned as a pair.
+- **/100-reasons-why/ text** ~17% larger on desktop, up to 10% on
+  mobile.
+- **Blessing copy** — warmer, more sincere tone; polite 您 used when the
+  site addresses visitors (form, confirmation).
+
+### Fixed
+
+- **Blessings now actually deploy after approval.** Previously the
+  approve action pushed with GITHUB_TOKEN, which GitHub does not
+  auto-trigger deploys from — a blessing could be committed but never
+  appear. The action now explicitly dispatches the Pages deploy.
+- **Gallery metadata save 409** — the settings page now re-fetches
+  `gallery.env` and merges before writing, so parallel edits no longer
+  collide.
+
+---
+
 ## 2026-09-07 — First real gallery photos live; photo links fixed
 
 ### Fixed
