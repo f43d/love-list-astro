@@ -35,12 +35,13 @@
 | File | Purpose | Mutability |
 | --- | --- | --- |
 | `data/list.env` | 100 bucket items | Owner edits, parsed by `parseList.ts` |
-| `data/blessings.env` | Approved blessings | Appended by `approve-blessing.yml` action |
+| `data/gallery.env` | Gallery photo metadata | Owner edits via /settings/ |
+| `data/videos.env` | Video clip metadata | Owner edits via /settings/ |
+| `data/blessings.env` | Approved blessings | Appended by `approve-blessing.yml` action; editable via /settings/ |
 | `public/CNAME` | Custom domain | Locked to `buc.ketli.st` |
-| `public/fonts/*` | DC-CST, awkwardblack (woff/woff2) | Frozen |
-| `public/images/*` | Profile photo, background, gallery | Frozen for now |
-| `public/svg/checkboxes/*` | Per-state checkbox SVGs (4 variants) | Frozen |
-| `public/svg/numbers/*` | Number-glyph SVGs (legacy, unused now) | Frozen |
+| `public/fonts/*` | DC-CST, awkwardblack, wenwrite (woff2) | Frozen |
+| `public/images/*` | Profile photo (`profile.jpg`, feathered via CSS mask), `background.jpg`, gallery webps | Photos owned; gallery webps via /settings/ |
+| `public/svg/checkboxes/checked1-4.svg`, `unchecked1-4.svg` | Per-state checkbox SVGs (4 variants) | Frozen |
 
 ## Source layout
 
