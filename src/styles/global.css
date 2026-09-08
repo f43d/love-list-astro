@@ -460,11 +460,14 @@ body::before {
 /* Wenwrite — only for the long-form prose on /100-reasons-why/. */
 .content-text--wenwrite {
   font-family: var(--font-prose);
-  /* Owner asked for ~15-20% larger body text on this page specifically.
-     The base .content-text rule is shared with /comment/, so this bump is
-     scoped here: min 1.15→1.35rem, preferred +~17%, max 2.04→2.4rem.
-     Mobile still clamps near the min; desktop grows the most. */
-  font-size: clamp(1.35rem, 0.84rem + 1.55vw, 2.4rem);
+  /* Owner feedback: bigger text on this page ONLY, but less on mobile
+     than desktop. Base .content-text is shared with /comment/, so the
+     bump is scoped here:
+       - mobile min: 1.15rem -> 1.265rem (+10%, the cap for small screens)
+       - desktop max: 2.04rem -> 2.4rem (+~17%)
+     The preferred term stays just above the base slope, so phones clamp
+     near the +10% min while wide screens approach +17%. */
+  font-size: clamp(1.265rem, 0.84rem + 1.55vw, 2.4rem);
   /* Same responsive text-shadow tiers as the site header text, so the
      handwritten prose stays legible over the wallpaper. Inherits to every
      paragraph (and the signature) inside the block. */
