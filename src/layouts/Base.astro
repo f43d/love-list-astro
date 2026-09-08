@@ -7,12 +7,16 @@ interface Props {
   title?: string;
   description?: string;
   showHeader?: boolean;
+  /** Robots meta directive. Default index, follow. Pass "noindex, nofollow"
+      for owner-only pages (e.g. /settings/) so crawlers don't index them. */
+  robots?: string;
 }
 
 const {
   title = '',
   description = '一百個不結婚的理由，再冠冕堂皇的藉口亦難掩内心的渴求。',
   showHeader = true,
+  robots = 'index, follow',
 } = Astro.props;
 
 const fullTitle = title ? `${title} · buc.ketli.st` : 'buc.ketli.st';
@@ -24,7 +28,7 @@ const fullTitle = title ? `${title} · buc.ketli.st` : 'buc.ketli.st';
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="generator" content={Astro.generator} />
   <meta name="description" content={description} />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content={robots} />
   <meta name="theme-color" content="#2f5061" />
   <meta name="color-scheme" content="only light" />
   <link rel="canonical" href={Astro.url.href} />
