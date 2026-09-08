@@ -844,10 +844,12 @@ dialog.lightbox img {
   /* Right-aligned: margin-left:auto pushes the badges to the container's
      right edge, away from the item text, so they never overlap the text
      (following the text caused the icons to sit over it while scrolling).
-     A right gutter pulls them a little inward on wide screens so they
-     aren't flush against the very edge. */
+     The right gutter pulls them inward on wide screens — more so on
+     desktop (owner feedback) so the icons sit closer to the centre of
+     the 800px column rather than flush at the edge. Mobile stays snug
+     because 4vw of a ~390px viewport is ~15px. */
   margin-left: auto;
-  margin-right: clamp(0.5rem, 3vw, 1.5rem);
+  margin-right: clamp(0.5rem, 4vw, 4rem);
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
