@@ -44,12 +44,14 @@ const subject = 'New blessing for buc.ketli.st';
     <input
       type="text"
       name="name"
+      id="b-name"
       required
       maxlength="40"
       autocomplete="name"
       placeholder="例如：小明"
       disabled={!configured}
     />
+    <small class="blessing-form__error" id="b-name-err" aria-live="polite"></small>
   </label>
 
   <label class="blessing-form__field">
@@ -57,23 +59,28 @@ const subject = 'New blessing for buc.ketli.st';
     <input
       type="email"
       name="email"
+      id="b-email"
       required
       autocomplete="email"
       placeholder="your@email.com"
       disabled={!configured}
     />
+    <small class="blessing-form__error" id="b-email-err" aria-live="polite"></small>
   </label>
 
   <label class="blessing-form__field">
     <span class="blessing-form__label">祝福</span>
     <textarea
       name="message"
+      id="b-message"
       required
-      maxlength="280"
+      maxlength="300"
       rows="4"
       placeholder="祝你們..."
       disabled={!configured}
     ></textarea>
+    <small class="blessing-form__error" id="b-message-err" aria-live="polite"></small>
+    <small class="blessing-form__counter" id="b-message-count"></small>
   </label>
 
   <button type="submit" class="blessing-form__submit" disabled={!configured}>
@@ -85,20 +92,87 @@ const subject = 'New blessing for buc.ketli.st';
 </form>
 
 <!-- Submits the form via fetch so we can show success/error in-page
-     without a full page reload. -->
+     without a full page reload. Validates before sending, and appends a
+     pre-built GitHub approval link so the Web3Forms notification email
+     carries a one-click approve URL for the owner. -->
 <script>
   const form = document.querySelector<HTMLFormElement>('.blessing-form');
   const status = form?.querySelector<HTMLParagraphElement>('.blessing-form__status');
   const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
 
+  const nameInput = form?.querySelector<HTMLInputElement>('#b-name');
+  const emailInput = form?.querySelector<HTMLInputElement>('#b-email');
+  const msgInput = form?.querySelector<HTMLTextAreaElement>('#b-message');
+  const nameErr = form?.querySelector<HTMLElement>('#b-name-err');
+  const emailErr = form?.querySelector<HTMLElement>('#b-email-err');
+  const msgErr = form?.querySelector<HTMLElement>('#b-message-err');
+  const msgCount = form?.querySelector<HTMLElement>('#b-message-count');
+
+  // Name: letters only (latin + CJK) and spaces — no digits or symbols.
+  const NAME_RE = /^[\p{L}\s]+$/u;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function showErr(el: HTMLElement | null | undefined, msg: string) {
+    if (el) { el.textContent = msg; el.hidden = !msg; }
+    return msg === '';
+  }
+
+  function updateCount() {
+    if (msgInput && msgCount) {
+      msgCount.textContent = `${msgInput.value.length}/300`;
+    }
+  }
+  msgInput?.addEventListener('input', updateCount);
+
+  // Pre-built GitHub Issue URL for the owner's approval email. Mirrors the
+  // README template that approve-blessing.yml parses:
+  //   <!-- blessing-approval --> **Name:** ... **Email:** ... **Message:** ...
+  function buildApproveUrl(name: string, email: string, message: string): string {
+    const title = '[blessing-approval]';
+    const today = new Date().toISOString().slice(0, 10);
+    const body = [
+      '<!-- blessing-approval -->',
+      '',
+      '**Name:** ' + name,
+      '**Email:** ' + email + ' (private)',
+      '**Date:** ' + today,
+      '**Message:** ' + message,
+      '',
+      '<!-- /blessing-approval -->',
+    ].join('\n');
+    const base = 'https://github.com/f43d/love-list-astro/issues/new';
+    return `${base}?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  }
+
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!form || !status || !submit) return;
+    if (!form || !status || !submit || !nameInput || !emailInput || !msgInput) return;
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const message = msgInput.value.trim();
+
+    let ok = true;
+    ok = showErr(nameErr, '') && ok;
+    ok = showErr(emailErr, '') && ok;
+    ok = showErr(msgErr, '') && ok;
+
+    if (!name) { showErr(nameErr, '請填上你的名字。'); ok = false; }
+    else if (!NAME_RE.test(name)) { showErr(nameErr, '名字只可用中英文文字和空格，不可用數字或符號。'); ok = false; }
+
+    if (!email) { showErr(emailErr, '請填上你的電郵。'); ok = false; }
+    else if (!EMAIL_RE.test(email)) { showErr(emailErr, '電郵格式似乎不正確。'); ok = false; }
+
+    if (!message) { showErr(msgErr, '請寫下你的祝福。'); ok = false; }
+    else if (message.length > 300) { showErr(msgErr, '祝福最多 300 字。'); ok = false; }
+
+    if (!ok) return;
 
     submit.disabled = true;
     status.textContent = '傳送中...';
 
     const data = new FormData(form);
+    data.append('approval_link', buildApproveUrl(name, email, message));
 
     try {
       const res = await fetch('https://api.web3forms.com/submit', {
@@ -110,6 +184,7 @@ const subject = 'New blessing for buc.ketli.st';
       if (res.ok && json.success) {
         status.textContent = '收到你的心意了！我們會細心讀過，再放上祝福牆。多謝你 💌';
         form.reset();
+        updateCount();
       } else {
         status.textContent = '送出失敗，請稍後再試。';
       }

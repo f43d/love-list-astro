@@ -49,7 +49,7 @@ jobs:
             }
 
             const safeName = name.replace(/\|/g, '/').slice(0, 40);
-            const safeMsg = message.replace(/\|/g, '/').replace(/\r?\n/g, ' ').slice(0, 280);
+            const safeMsg = message.replace(/\|/g, '/').replace(/\r?\n/g, ' ').slice(0, 300);
 
             const fs = require('fs');
             const path = 'data/blessings.env';
