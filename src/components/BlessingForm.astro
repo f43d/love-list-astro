@@ -36,7 +36,7 @@ const subject = 'New blessing for buc.ketli.st';
   />
 
   <p class="blessing-form__intro">
-    留下一句話、一段祝福。批准後便會出現在留言板 ❤️
+    你的心意，我們收到 ❤️
   </p>
 
   <label class="blessing-form__field">
@@ -108,7 +108,7 @@ const subject = 'New blessing for buc.ketli.st';
       const json = await res.json();
 
       if (res.ok && json.success) {
-        status.textContent = '已收到！待批准後便會公開。多謝你 💌';
+        status.textContent = '收到你的心意了！我們會細心讀過，再放上祝福牆。多謝你 💌';
         form.reset();
       } else {
         status.textContent = '送出失敗，請稍後再試。';
