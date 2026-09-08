@@ -45,27 +45,38 @@ longer narrative below.
 | Item | Detail |
 | --- | --- |
 | Domain name | `ketli.st` |
-| Subdomain in use | `buc.ketli.st` (CNAME → `f43d.github.io`, DNS-only, no Cloudflare proxy) |
-| DNS provider | **Cloudflare** (also acts as the registrar) |
-| Cloudflare account email | <single email; no backup email set — add one if you can> |
-| Account / customer number | <look up in the Cloudflare dashboard under Account > Manage account> |
-| **Renewal date** | **6 June 2027** — set a calendar reminder ~2 weeks before |
-| **Auto-renew** | Yes (paid by card on file). If the card on file expires, the renewal will silently fail and the domain will lapse. Update the card details when they change. |
-| Payment method on file | <last4 digits + card type> (look up in Cloudflare Billing) |
+| Subdomain in use | `buc.ketli.st` (CNAME → `f43d.github.io`, DNS-only at Cloudflare, no proxy) |
+| **Registrar** | **Netim** — the `.st` domain is registered and renewed HERE. See "Registrar (Netim)" below. |
+| DNS provider | **Cloudflare** — hosts the DNS records that point `buc.ketli.st` at GitHub Pages. Cloudflare is NOT the registrar. |
+| **Renewal date** | **6 June 2027** — set a calendar reminder ~2 weeks before. Renew at Netim. |
+| **Auto-renew** | Confirm it is ON at Netim (paid by card on file). If the card expires, renewal silently fails and the domain lapses. |
 
 > **If the domain lapses**, visitors can still reach the site at the
 > `f43d.github.io/love-list-astro/` fallback URL until GitHub Pages is
-> decommissioned (likely decades away).
+> decommissioned (likely decades away). But renewing at Netim is what
+> keeps `buc.ketli.st` alive.
 
-### Cloudflare account
+### Registrar (Netim)
 
-- Email: as above (single email, no backup).
-- The Cloudflare account owns **both** the DNS records and the domain
-  registration. If you lose access, contact Cloudflare support
-  (https://support.cloudflare.com/) with proof of identity.
-- The DNS records can be edited directly at the registrar if Cloudflare
-  is just the DNS provider — but here Cloudflare IS the registrar, so
-  that's not an option. Keep this account secure.
+- The `.st` domain registration lives at **Netim** (https://www.netim.com).
+- Log in with the Netim account credentials (email + password in the
+  family Bitwarden vault — see the private handover letter, NOT this
+  public file).
+- Renew `ketli.st` before **6 June 2027**. Netim sends renewal reminders
+  to the registered account email — make sure that inbox is monitored.
+- Netim may use a different login than Cloudflare — they are two separate
+  accounts.
+
+### Cloudflare account (DNS only)
+
+- Email: as above (single email; add a backup email if you can).
+- Cloudflare only hosts the **DNS records**. The domain itself is NOT
+  registered here — it is at Netim.
+- If the Cloudflare account is lost, the DNS can be recreated at Netim's
+  own DNS panel, or on any DNS host, pointing `buc.ketli.st` at
+  `f43d.github.io` (CNAME). Losing Cloudflare delays but does not kill
+  the site; losing Netim access is the serious one.
+- Contact support: https://support.cloudflare.com/
 
 ## GitHub account
 
@@ -105,13 +116,23 @@ verify at https://web.archive.org/web/*/buc.ketli.st.
 
 ### Domain expires / lapses
 
-1. Check the registrar (Cloudflare) account; pay the renewal.
-2. Cloudflare → **Websites** → `ketli.st` → **Renew**.
+1. Check the registrar (**Netim** — not Cloudflare); pay the renewal there.
+2. Netim → your account → `ketli.st` → Renew / pay the invoice.
 
-### Cloudflare account inaccessible
+### Netim (registrar) account inaccessible
 
-1. Single email + no backup email = the most fragile link. If locked out,
-   Cloudflare support is the only path: https://support.cloudflare.com/
+1. This is the serious one — the domain registration lives here. Contact
+   Netim support (https://www.netim.com) with proof of identity (owner's
+   ID, death certificate if applicable, account email).
+2. **Prevent this**: make sure the Netim account email + password are in
+   the family Bitwarden vault, and that the account has a recovery email.
+
+### Cloudflare account inaccessible (DNS only)
+
+1. The site still works — Cloudflare only serves the DNS records. If
+   locked out, either contact Cloudflare support, or recreate the DNS at
+   Netim (or any DNS host) pointing `buc.ketli.st` → `f43d.github.io`
+   (CNAME). Losing Cloudflare is an inconvenience, not a loss.
 2. **Prevent this**: add a backup email + 2FA on the Cloudflare account.
 
 ### GitHub inaccessible / repo deleted
