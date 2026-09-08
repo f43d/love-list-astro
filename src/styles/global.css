@@ -460,6 +460,11 @@ body::before {
 /* Wenwrite — only for the long-form prose on /100-reasons-why/. */
 .content-text--wenwrite {
   font-family: var(--font-prose);
+  /* Owner asked for ~15-20% larger body text on this page specifically.
+     The base .content-text rule is shared with /comment/, so this bump is
+     scoped here: min 1.15→1.35rem, preferred +~17%, max 2.04→2.4rem.
+     Mobile still clamps near the min; desktop grows the most. */
+  font-size: clamp(1.35rem, 0.84rem + 1.55vw, 2.4rem);
   /* Same responsive text-shadow tiers as the site header text, so the
      handwritten prose stays legible over the wallpaper. Inherits to every
      paragraph (and the signature) inside the block. */
@@ -906,6 +911,12 @@ dialog.lightbox img {
   color: var(--color-footer);
   font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1.125rem);
   line-height: 1.6;
+}
+
+/* The "2002-{year}" copyright range sits a little apart from
+   "All rights reserved" for readability. */
+.footer__years {
+  margin-left: 0.6em;
 }
 
 .site-footer a {
