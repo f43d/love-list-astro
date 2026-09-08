@@ -841,15 +841,17 @@ dialog.lightbox img {
 
 /* === Bucket list photo/video badges === */
 .list-item__badges {
-  /* Sit right after the item text with a comfortable gap instead of
-     being pushed to the far right edge (margin-left:auto). On a wide
-     desktop the far-right position puts the badge a long way from the
-     text; following the text keeps it visually attached. */
+  /* Right-aligned: margin-left:auto pushes the badges to the container's
+     right edge, away from the item text, so they never overlap the text
+     (following the text caused the icons to sit over it while scrolling).
+     A right gutter pulls them a little inward on wide screens so they
+     aren't flush against the very edge. */
+  margin-left: auto;
+  margin-right: clamp(0.5rem, 3vw, 1.5rem);
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
   flex: 0 0 auto;
-  margin-left: clamp(0.75rem, 2.5vw, 1.75rem);
 }
 .list-item__badges .list-item__photo-icon {
   margin-left: 0;
