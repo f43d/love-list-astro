@@ -1,85 +1,100 @@
 # love-list-astro
 
-Static bucket-list site (Astro rewrite of the Hugo paperMod version), hosted on GitHub Pages and served from **https://buc.ketli.st**.
+A static bucket-list site for a married couple (翁強 & Josephine) — a gift that
+is meant to outlive its owner. Lists 100 things to do together, with a photo
+gallery, videos, a "100 reasons not to marry" page, and a public blessing wall
+with private moderation.
+
+Live at **https://buc.ketli.st** · Source on GitHub
+(f43d/love-list-astro). If you are here to maintain the site, read
+`docs/PERMANENCE.md` first, then `AGENTS.md`.
 
 ## Stack
 
-- [Astro 5](https://astro.build) — static output
-- Plain CSS with custom properties (no Tailwind, no jQuery, no nanogallery2)
-- Vanilla JS for the marriage counter, back-to-top, and gallery lightbox
-- [Web3Forms](https://web3forms.com) for the blessing form (no backend to run)
-- GitHub Issues → GitHub Actions for blessing moderation & publishing
+- [Astro 5](https://astro.build) — static output (`output: 'static'`), no server
+- Plain CSS with custom properties (tokens in `src/styles/global.css` `:root`)
+- Vanilla JS only — no React / Vue / Tailwind / jQuery
+- [Web3Forms](https://web3forms.com) for the blessing form (no backend)
+- GitHub Issues + Actions for blessing moderation
+- GitHub Pages hosting via Actions, custom domain via `public/CNAME`
 
 ## Pages
 
 | Path | Purpose |
 | --- | --- |
-| `/` | The 100-item bucket list with marriage counter |
-| `/100-reasons-why/` | Long-form "reasons not to marry" page |
-| `/gallery/` | Photo grid + lightbox |
-| `/comment/` | Blessing form + blessing wall |
+| `/` | The 100-item bucket list (photo/video badges deep-link into the gallery / video page) |
+| `/gallery/` | Photo grid + native lightbox |
+| `/video/` | Video clips, grouped by bucket item |
+| `/comment/` | Blessing form + approved blessing wall |
+| `/100-reasons-why/` | The couple's "reasons not to marry" prose |
+| `/settings/` | **Owner-only.** Not linked anywhere. Manage photos, videos, list items, and blessings. `noindex`. |
 
-## Editing the bucket list
+## Where content lives
 
-The 100 bucket items live in `data/list.env` (pipe-separated). Format:
+All site content is pipe-separated `.env` files in `data/` (never JSON/YAML —
+they're hand-editable). See `docs/ARCHITECTURE.md` §"Data model" for the exact
+formats of each file:
+
+- `data/list.env` — the 100 bucket items (`NN|checked|text|link|photo`)
+- `data/gallery.env` — gallery photos (`NN|date|location|caption|url`)
+- `data/videos.env` — video clips (`NN|date|caption|file|item`)
+- `data/blessings.env` — approved blessings (`NN|date|name|message`)
+
+## Editing content
+
+The **recommended** way for the owner/family is the hidden `/settings/` page:
+
+1. Open `https://buc.ketli.st/settings/`
+2. Paste a GitHub **fine-grained PAT** with `Contents: Read and write` on
+   this repo (kept in `sessionStorage`, cleared on tab close).
+3. Use the tabs: List editor, List links, Photos, Videos, Blessings.
+   Every save commits to the repo via the GitHub API and deploys ~30 s later.
+
+To edit files directly instead, change `data/*.env`, commit, push.
+
+## Blessings (comment wall) — moderation
+
+A visitor's blessing goes through the owner before it appears:
 
 ```
-NN|checked|text|link
-```
-
-For checked items, point `link` at a Cloudflare R2 / Immesh photo URL.
-
-## Blessings (comment wall)
-
-### How it works
-
-```
-Visitor → form on /comment/
+Visitor → form on /comment/ (client-side validated)
    ↓ POST → Web3Forms → email to owner
+   ↓ The email includes a ready-to-click approval link
+   ↓ Owner clicks it → a pre-filled GitHub Issue opens
+   ↓ approve-blessing.yml appends to data/blessings.env,
+   │   pushes, and explicitly fires the Pages deploy
    ↓
-Owner copies the form data into a GitHub Issue (one click from a pre-filled link)
-   ↓
-.github/workflows/approve-blessing.yml appends to data/blessings.env, pushes
-   ↓
-deploy.yml rebuilds the site
-   ↓
-Approved blessing appears on /comment/  (~30 s later)
+Blessing appears on /comment/  (~30 s later)
 ```
 
-### Setup
+Rejecting = just don't click the approval link. To edit or remove a blessing
+later, use `/settings/` → 💌 Blessings.
 
-1. **Get a Web3Forms access key** at https://web3forms.com — enter the email where you want submissions to land, copy the key.
-2. **Set the secret in GitHub**: repo → Settings → Secrets and variables → Actions → Variables → `PUBLIC_WEB3FORMS_KEY` → paste the key.
-3. **Local dev**: copy `.env.example` to `.env` and add the same key.
-
-### Moderation workflow
-
-When you get a Web3Forms email, click this link (replace placeholders):
-
-```
-https://github.com/f43d/love-list-astro/issues/new?title=[blessing-approval]&body=%3C%21%2D%2D+blessing-approval+%2D%2D%3E%0A%0A%2A%2AName%3A%2A%2A+%3Cname%3E%0A%2A%2AEmail%3A%2A%2A+%3Cemail%3E+%28private%29%0A%2A%2BMessage%3A%2A%2A+%3Cmessage%3E%0A%0A%3C%21%2D%2D+%2Fblessing-approval+%2D%2D%3E
-```
-
-It opens a pre-filled Issue. Edit if you want, click **Submit**. The Action appends the entry and closes the Issue.
-
-### Manual addition
-
-You can also just edit `data/blessings.env` directly:
-
-```
-NN|YYYY-MM-DD|name|message
-```
-
-Commit and push.
+Details: `docs/ARCHITECTURE.md` §"Moderation flow", `docs/OPERATIONS.md`
+§"Blessing approval", and the DECISIONS.md note about why approval explicitly
+dispatches the deploy.
 
 ## Local development
 
 ```bash
 npm install
 npm run dev      # http://localhost:4321
-npm run build    # outputs to ./dist
+npm run build    # outputs to ./dist (committed by Actions, never by you)
 ```
 
 ## Deployment
 
-Pushes to `main` trigger `.github/workflows/deploy.yml`. The custom domain is fixed by `public/CNAME` → `buc.ketli.st`.
+Pushes to `main` trigger `.github/workflows/deploy.yml`. The custom domain is
+fixed by `public/CNAME` → `buc.ketli.st`. Pushes made by GitHub Actions'
+`GITHUB_TOKEN` do **not** auto-trigger deploys — workflows that need a deploy
+after their own push (blessing approval) dispatch it explicitly.
+
+## Documentation map (for future maintainers)
+
+- `docs/PERMANENCE.md` — how the site survives (domain, backups, successor). **Read first if you're taking over.**
+- `AGENTS.md` — project conventions + guardrails for an AI agent.
+- `docs/ARCHITECTURE.md` — data flow, deploy flow, moderation flow, data model.
+- `docs/OPERATIONS.md` — day-2 ops, env vars, settings page, common gotchas.
+- `docs/DECISIONS.md` — every design decision and why (append-only).
+- `docs/HANDOFF.md` — how to hand the project to the next AI session.
+- `docs/sessions/` — chronological session log.

@@ -2,6 +2,10 @@
 
 Day-2 maintenance guide. Goal: anyone (human or AI) can fix any common problem in &lt;10 minutes.
 
+**If you're taking over the site** (the owner is no longer available), start
+with `docs/PERMANENCE.md` — it explains where everything lives and what to do
+if a piece breaks. This file is the day-to-day reference.
+
 ## Local development
 
 ```bash
@@ -21,6 +25,17 @@ Never commit `.env`. `.env.example` is committed and shows the schema.
 
 To set in GitHub: **Settings → Secrets and variables → Actions → Variables → New repository variable**.
 
+## Pages
+
+| Path | Purpose | Linked from |
+| --- | --- | --- |
+| `/` | 100-item bucket list | everywhere |
+| `/gallery/` | Photos + lightbox | bucket-list camera badges |
+| `/video/` | Video clips grouped by bucket item | bucket-list video badges |
+| `/comment/` | Blessing form + wall | footer |
+| `/100-reasons-why/` | The couple's prose | header |
+| `/settings/` | Owner-only management UI | **nowhere** (visit the URL directly) |
+
 ## Deploy
 
 Push to `main` triggers `.github/workflows/deploy.yml`:
@@ -32,30 +47,43 @@ Push to `main` triggers `.github/workflows/deploy.yml`:
 
 **Manual re-deploy**: visit Actions → pick run → "Re-run all jobs". Needed if env vars change.
 
+**Gotcha**: a push made *by a GitHub Action using `GITHUB_TOKEN`* does not
+auto-trigger other workflows. The blessing-approval workflow therefore
+explicitly dispatches the deploy after it pushes (see DECISIONS.md 2026-09-08).
+
 ## Blessing approval
 
-When `support@web3forms.com` (or whatever address was registered) emails a new submission:
+A visitor submits on `/comment/` → Web3Forms emails the registered address.
+**The email now includes a pre-built `approval_link`** — a GitHub Issue URL
+with the name/email/message already filled in. So approving is:
 
-1. Open this URL (paste into the email body to make it a one-tap link, or copy-paste now):
-   ```
-   https://github.com/f43d/love-list-astro/issues/new?title=[blessing-approval]&body=<!-- blessing-approval -->%0A%0A**Name:** %3Cname%3E%0A**Email:** %3Cemail%3E (private)%0A**Message:** %3Cmessage%3E%0A%0A<!-- /blessing-approval -->
-   ```
-2. Replace `<name>`, `<email>`, `<message>` (URL-encode newlines as `%0A`).
+1. Click the `approval_link` in the email → a pre-filled Issue opens.
+2. (Optional) Edit the name/message if you want.
 3. Click **Submit new issue**.
-4. `approve-blessing.yml` runs: appends to `data/blessings.env`, commits, closes Issue.
-5. `deploy.yml` runs: new blessing live in ~30 s.
+4. `approve-blessing.yml` appends to `data/blessings.env`, pushes, and fires
+   the Pages deploy.
+5. Blessing appears on `/comment/` ~30 s later.
 
-To moderate by hand instead: edit `data/blessings.env` directly, commit, push.
+To approve by hand instead (e.g. if you reply to the email from your phone),
+use this template — replace `<name>`, `<message>`:
+
+```
+https://github.com/f43d/love-list-astro/issues/new?title=[blessing-approval]&body=<!-- blessing-approval -->%0A%0A**Name:** <name>%0A**Date:** <YYYY-MM-DD>%0A**Message:** <message>%0A%0A<!-- /blessing-approval -->
+```
+
+To reject: just don't open the link. To edit/delete an approved blessing,
+use `/settings/` → 💌 Blessings tab.
 
 ## Adding / editing items
 
-- **Bucket item**: edit `data/list.env`, commit, push.
-- **Blessing**: see above.
-- **Reasons-why page**: edit `src/pages/100-reasons-why.astro`, commit, push.
-- **New page**:
-  - Create `src/pages/<path>.astro` (extends `Base.astro` from `src/layouts/`).
-  - Use `import Base from '../layouts/Base.astro'` and `<Base title="..."><main>...</main></Base>`.
-  - Add to navigation by editing `src/components/Footer.astro` or wherever the nav lives.
+The owner/family should prefer the **`/settings/` page** (see below) over
+hand-editing. If editing files directly:
+
+- **Bucket item**: edit `data/list.env` (5 columns now — `NN|checked|text|link|photo`), commit, push.
+- **Gallery photo**: `data/gallery.env` + the webp in `public/images/gallery/`.
+- **Video clip**: `data/videos.env` + the mp4 in `public/videos/`.
+- **Reasons-why prose**: `src/pages/100-reasons-why.astro`.
+- **New page**: create `src/pages/<path>.astro` extending `Base.astro`, add nav in the header/footer as appropriate.
 
 ## Changing colours / fonts
 
@@ -72,15 +100,17 @@ Edit `src/styles/global.css` `:root` block. The site has one source of truth —
 ## Common gotchas
 
 - **`PUBLIC_WEB3FORMS_KEY` not set** → form shows a "form not enabled" warning and inputs are disabled. Check GitHub Variables or `.env`.
-- **Blessing count gap** — `parseBlessings.ts` computes next id as `max(ids) + 1`, so deleting old entries leaves gaps. That's fine; do not re-number.
-- **Pipe character in items** — both `.env` files treat `|` as the field separator. Replace with `/` in any user content.
-- **Trailing newline missing in `.env`** — `parseList.ts` handles it but adding a line WITHOUT a final newline then a CI edit can lead to one big line. Always end files with `\n`.
+- **Blessing count gap** — the approve action computes next id as `max(ids) + 1`, so deleting old entries leaves gaps. That's fine; do not re-number.
+- **Pipe character in items** — all four `.env` data files treat `|` as the field separator. Replace with `/` in any user content.
+- **`data/list.env` is 5 columns now** — `NN|checked|text|link|photo`. `parseList.ts` uses `fieldCount=5`. If a future schema change is made, keep the parser and data file in sync (a mismatch silently breaks photo badges — see DECISIONS.md 2026-09-07).
+- **Approved blessing not appearing?** — check whether a `Deploy to GitHub Pages` run exists for the blessing commit. If not, the approve action's explicit `workflow_dispatch` may have failed; check the approve workflow's permissions (`actions: write`) and re-run it.
+- **Trailing newline missing in `.env`** — the parsers handle it, but a CI edit adding a line WITHOUT a final newline can produce one big line. Always end files with `\n`.
 - **Long Chinese strings** — the CSS line-heights assume ~1.5× font size; if a string contains many `…` or unusual punctuation, test on mobile.
 - **Custom domain not resolving** — wait 5–30 min after DNS edit. Re-check with:
   ```bash
   dig +short buc.ketli.st A @1.1.1.1
   ```
-  Expected: 4 GitHub IPs.
+  Expected: 4 GitHub IPs (or the CNAME target).
 
 ## Backup / restore
 
@@ -138,17 +168,29 @@ Rotate/revoke the GitHub PAT used for the initial push once no longer needed.
 
 ## Settings page (owner-only)
 
-The site has a hidden `/settings/` page (no link anywhere) that lets the owner manage photos and bucket-list links via a UI instead of editing env files in the GitHub web UI.
+The site has a hidden `/settings/` page (no link anywhere; `noindex`) that lets
+the owner/family manage all content through a UI instead of editing env files.
 
-**Auth**: paste a GitHub PAT (Contents: Read+write on `love-list-astro`). Token is held in `sessionStorage` (cleared when the tab closes) — not `localStorage`, to limit exposure.
+**Auth**: paste a GitHub **fine-grained PAT** (Contents: Read+write on
+`f43d/love-list-astro`). Token is held in `sessionStorage` (cleared when the
+tab closes) — not `localStorage`, to limit exposure.
 
-**Capabilities**:
-- View, edit, delete existing photos in `data/gallery.env`
-- Upload a new photo: file picker → in-browser resize to 1600 px wide → convert to WebP (~150 KB) → commit to `public/images/gallery/NN.webp` + update env
-- Link/unlink checked bucket list items to photos
+**Capabilities** (tabs, left to right):
+- **List editor** — edit item text + checked state, add items (auto-fills
+  the lowest missing NN). 10 per page.
+- **List links** — link a checked bucket item to a gallery photo (this is
+  what makes the camera badge + deep-link appear).
+- **Photos** — view/edit/delete gallery photos; upload new ones (browser
+  resizes to 1600 px wide WebP and commits). Also edit date/location/caption.
+- **Videos** — upload or reference video clips, group them under a bucket
+  item.
+- **Blessings** — edit or delete approved blessings on the wall.
 
-**Every commit triggers the existing GitHub Actions deploy.** Changes go live ~30 s after a save.
+**Every commit triggers the existing GitHub Actions deploy.** Changes go live
+~30 s after a save.
 
 **PAT scope requirements**: Contents: Read and write on `love-list-astro` only. Token has no other scopes.
 
-**For family / future maintainers**: see `docs/PERMANENCE.md`. The `/settings/` page is for the owner — visitors don't see it.
+**For family / future maintainers**: see `docs/PERMANENCE.md`. The `/settings/`
+page is owner-only — visitors don't see it, and it must never be linked from a
+public page.

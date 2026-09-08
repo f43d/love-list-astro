@@ -66,56 +66,54 @@ Read these in this order before doing anything:
   DECISIONS + CHANGELOG entries, show drafts, wait for confirmation,
   commit, push, then remind ONCE about PAT revocation.
 
-## Current state at handoff (commit 4345f22)
+## Current state at handoff (2026-09-08, commit ac29fd3 / site public 2026-09-09)
 
 ### What works
 
-- Site builds clean (`npm run build` → 5 pages, no errors).
+- Site builds clean (`npm run build` → 6 pages: /, /gallery/, /video/,
+  /comment/, /100-reasons-why/, /settings/ — no errors).
 - `npx astro check` → 0 errors, 0 warnings.
-- All 10 previously-missing DC-CST characters are now resolved (either
-  substituted with chars DC-CST has, or rendered via Noto Sans HK /
-  wenwrite where DC-CST isn't used).
-- Blessing form works end-to-end (Web3Forms → email → GitHub Issue →
-  approved → published).
-- Photo management: `/settings/` page lets the owner upload, edit,
-  delete photos; client-side canvas resizes to WebP.
-- Custom domain: `buc.ketli.st` (CNAME → `f43d.github.io`).
-- TLS via Let's Encrypt (auto-provisioned by GitHub Pages).
+- All fonts render (DC-CST, awkwardblack, wenwrite + Noto Sans HK from
+  Google Fonts); every named custom font has an `@font-face` declaration.
+- **Blessing wall works end-to-end** — a real submission was tested:
+  form (client-side validated) → Web3Forms email with a ready-to-click
+  approval link → GitHub Issue → approve action appends + explicitly
+  dispatches the Pages deploy → blessing live ~30s. See
+  DECISIONS.md 2026-09-08 for the deploy-dispatch gotcha.
+- `/settings/` owner-only UI (PAT in sessionStorage): List editor,
+  List links, Photos, Videos, and 💌 Blessings tabs. `noindex`.
+- Gallery photos deep-link from checked bucket items (camera badge);
+  videos deep-link from the play badge.
+- Custom domain `buc.ketli.st` (CNAME → `f43d.github.io`), TLS via
+  GitHub Pages.
 
 ### What's in scope to do (open items, in priority order)
 
-1. **Test the blessing form end-to-end** (owner action) — submit on
-   /comment/, check email, click the Issue approve link, verify the
-   blessing lands on the wall in ~30s. Web3Forms key has been set.
-2. **Set a GitHub designated successor** (owner action, 5 min) — see
-   `docs/PERMANENCE.md` for the link to GitHub's docs.
-3. **Set a calendar reminder for 6 June 2027** (domain renewal).
-4. **Mirror the repo to GitLab** (one-time setup):
-   `git remote add gitlab https://gitlab.com/f43d/love-list-astro.git`
-   then `git push gitlab main`. Optionally update `.github/workflows/deploy.yml`
-   to also push to gitlab after each build.
-5. **Add a local backup**: `git clone … ~/backups/love-list-astro`.
-6. **Tighten the security of the Cloudflare account** — add a backup
-   email and 2FA. Currently single email, no 2FA mentioned.
-7. **Update the dev workflow** to push to the GitLab mirror automatically
-   (only if you set one up in step 4).
+1. **GitHub designated successor** (owner action, ~5 min) — see
+   `docs/PERMANENCE.md`.
+2. **Calendar reminder for 6 June 2027** (domain renewal).
+3. **Mirror the repo to GitLab** (one-time): `git remote add gitlab
+   https://gitlab.com/f43d/love-list-astro.git` then `git push gitlab main`.
+4. **Add a local backup**: `git clone … ~/backups/love-list-astro`.
+5. **Cloudflare account**: add a backup email + 2FA (single email today).
+6. **The test blessing** (小吉, "Happy Birthday !") is on the wall — the
+   owner may want to remove it via /settings/ → 💌 Blessings now that the
+   site is public.
 
-### Last-session artifacts (still need the user's eyes)
+### Last-session artifacts
 
-- `docs/PERMANENCE.md` is filled in (registrar, renewal, successor,
-  backups). Action items at the top of that file are the "next-session
-  to-do" list — read it first.
-- `docs/DECISIONS.md` has the 2026-08-29 entries covering the
-  responsive overhaul, the wenwrite font, the DC-CST substitutions,
-  the schema-migration rule (parseLine accepts extra fields), and
-  the permanence plan.
+- `docs/PERMANENCE.md` action items at the top are the standing to-do list.
+- `docs/DECISIONS.md` has the full decision history through 2026-09-08
+  (incl. blessing-deploy dispatch, settings photo 409 fix, camera-icon
+  click-through rule).
+- The site goes fully public 2026-09-09 — everything is verified working.
 
 ### Things the next AI should NOT do
 
 - Don't add a runtime backend. The site is intentionally static.
   If a feature "needs a server", the right answer is almost always
-  Web3Forms, GitHub Issues, GitHub Actions, or Cloudflare Workers
-  (if truly needed — none of these are deployed today).
+  Web3Forms, GitHub Issues, GitHub Actions (none of which are a "server"
+  to run).
 - Don't add Tailwind, jQuery, or any framework. The site is plain
   CSS + vanilla JS by design. See `AGENTS.md` for the rationale.
 - Don't change DC-CST, awkwardblack, or wenwrite. The handwritten
@@ -126,6 +124,9 @@ Read these in this order before doing anything:
 - Don't push to main without the user's confirmation when the change
   is non-trivial (CSS, data file edits, public-facing text). For
   doc-only changes (end-of-day docs, etc.), push directly.
+- Don't simplify away the blessing workflow's explicit
+  `workflow_dispatch` (GITHUB_TOKEN pushes don't cascade — see
+  DECISIONS.md 2026-09-08).
 
 ## How to start a session on this project
 
@@ -176,32 +177,30 @@ or similar):
 - **Live URL**: https://buc.ketli.st
 - **Default branch**: main
 - **Workflows**: `.github/workflows/deploy.yml` (builds + deploys to
-  GitHub Pages), `.github/workflows/approve-blessing.yml` (moderates
-  blessings)
-- **Hidden pages**: `/settings/` (no public link — owner-only)
+  GitHub Pages; also fires on manual `workflow_dispatch`),
+  `.github/workflows/approve-blessing.yml` (moderates blessings; dispatches
+  the deploy after its own push)
+- **Hidden pages**: `/settings/` (no public link — owner-only, noindex)
 - **Public data files**: `data/list.env`, `data/gallery.env`,
-  `data/blessings.env`
+  `data/videos.env`, `data/blessings.env`
 - **GitHub Variables needed**: `PUBLIC_WEB3FORMS_KEY` (Actions
   variables, scope: repo). Without it the blessing form is disabled.
 
-## Last session summary (2026-08-30)
+## Last session summary (2026-08-30 — original handoff)
 
-- Filled in `docs/PERMANENCE.md` placeholders (registrar = Cloudflare,
-  renewal 6 June 2027, successor = son or daughter, GitLab mirror to
-  be set up, local backup as an action item).
-- 4 DC-CST missing characters substituted:
-  - 強 → 强 (Footer.astro)
-  - 氹 → 哄 (data/list.env item 28)
-  - 為 → 爲 (data/list.env item 74)
-  - 錄 → 録 (data/list.env item 89)
-- After these, no DC-CST-missing char is rendered in a DC-CST context.
-  The other 6 of the original 10 missing chars are rendered via Noto
-  Sans HK or wenwrite or in a non-visual meta tag — those were always
-  fine.
-- Previous-day cleanup pass: `src/lib/{types,parseEnv,utils}.ts` as
-  shared modules; `parseList/Gallery/Blessings.ts` slimmed to ~30
-  lines each; `settingsClient.ts` consolidated; components got
-  comment blocks.
+Historical note: the first handoff was written 2026-08-30 after the Hugo →
+Astro rewrite. It covered: PERMANENCE placeholders filled, 4 DC-CST
+substitutions (強→强, 氹→哄, 為→爲, 錄→録), and the shared-module cleanup
+(`src/lib/{types,parseEnv,utils}.ts`).
+
+## Most recent state (2026-09-08 — launch eve)
+
+The site went fully public 2026-09-09. Latest verified facts are in
+§"Current state at handoff" above and in `docs/sessions/2026-09-08.md`.
+Key additions since the original handoff: the gallery (in-repo WebP),
+the /video/ clips page, the owner-only /settings/ UI (now 5 tabs
+including Blessings), form validation + one-click approval, and the
+deploy-dispatch fix so approved blessings actually publish.
 
 ---
 
