@@ -7,13 +7,13 @@
  * api.github.com.
  * ========================================================================== */
 
-import type { BucketItem, GalleryItem, VideoItem } from './types';
+import type { Blessing, BucketItem, GalleryItem, VideoItem } from './types';
 import { formatBytes, escapeHtml } from './utils';
 
 const REPO = 'f43d/love-list-astro';
 const API = 'https://api.github.com';
 
-export type { BucketItem, GalleryItem, VideoItem };
+export type { Blessing, BucketItem, GalleryItem, VideoItem };
 
 export interface GithubFile {
   path: string;
@@ -228,6 +228,17 @@ const VIDEOS_HEADER = [
   '',
 ].join('\n');
 
+const BLESSINGS_HEADER = [
+  '# Blessings Wall — approved wishes, pipe-separated',
+  '# Format per line: NN|date|name|message',
+  '#   NN      : two-digit id, zero-padded',
+  '#   date    : YYYY-MM-DD',
+  '#   name    : visitor\'s display name (1–40 chars)',
+  '#   message : blessing / wish',
+  "# Lines starting with '#' are ignored.",
+  '',
+].join('\n');
+
 export function parseVideos(text: string): VideoItem[] {
   return text
     .split(/\r?\n/)
@@ -253,6 +264,33 @@ export function serialiseVideos(items: VideoItem[], existingHeader = ''): string
   if (header && !header.endsWith('\n')) header += '\n';
   const body = items
     .map((it) => [it.num, it.date, it.caption, it.file, it.item].join('|'))
+    .join('\n');
+  return header + body + '\n';
+}
+
+export function parseBlessings(text: string): Blessing[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => l.split('|'))
+    .filter((p) => p.length >= 4)
+    .map(([num, date, name, message]) => ({
+      num: num.trim().padStart(2, '0'),
+      id: Number.parseInt(num, 10),
+      date: (date ?? '').trim(),
+      name: (name ?? '').trim(),
+      // Blessing messages are single-line in practice (the approve action
+      // strips newlines); keep the raw field so nothing is mangled.
+      message: (message ?? '').trim(),
+    }));
+}
+
+export function serialiseBlessings(items: Blessing[], existingHeader = ''): string {
+  let header = existingHeader || BLESSINGS_HEADER;
+  if (header && !header.endsWith('\n')) header += '\n';
+  const body = items
+    .map((it) => [it.num, it.date, it.name, it.message].join('|'))
     .join('\n');
   return header + body + '\n';
 }

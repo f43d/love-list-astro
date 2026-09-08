@@ -30,6 +30,7 @@ import Base from '../layouts/Base.astro';
       <button class="tab-btn" data-tab="list-links" role="tab" aria-selected="false">🔗 List links</button>
       <button class="tab-btn" data-tab="photos" role="tab" aria-selected="false">📷 Photos</button>
       <button class="tab-btn" data-tab="videos" role="tab" aria-selected="false">🎬 Videos</button>
+      <button class="tab-btn" data-tab="blessings" role="tab" aria-selected="false">💌 Blessings</button>
     </nav>
 
     <!-- ───── Panels container (hidden until connected) ───── -->
@@ -125,6 +126,12 @@ import Base from '../layouts/Base.astro';
         </details>
       </section>
 
+      <!-- Panel: Blessings -->
+      <section id="panel-blessings" class="tab-panel" data-tab-panel="blessings" role="tabpanel" hidden>
+        <p class="tab-intro">Approved blessings on the wall (/comment/). Edit or delete them here — changes commit to data/blessings.env and deploy in ~30s.</p>
+        <div id="blessings-list" class="blessings-list"></div>
+      </section>
+
     </div>
   </article>
 </Base>
@@ -134,9 +141,9 @@ import {
   verifyPat, setPat, getPat, clearPat,
   getFile, putFile, putBinaryFile, deleteFile, getBinaryFileSha,
   parseGallery, serialiseGallery, parseList, serialiseList,
-  parseVideos, serialiseVideos,
+  parseVideos, serialiseVideos, parseBlessings, serialiseBlessings,
   processImage, formatBytes,
-  type GalleryItem, type BucketItem, type VideoItem, type GithubFile,
+  type GalleryItem, type BucketItem, type VideoItem, type Blessing, type GithubFile,
 } from '../lib/settingsClient';
 
 // ───── State ─────
@@ -144,9 +151,11 @@ let pat = '';
 let gallery: GalleryItem[] = [];
 let listItems: BucketItem[] = [];
 let videos: VideoItem[] = [];
+let blessings: Blessing[] = [];
 let galleryFile: GithubFile | null = null;
 let listFile: GithubFile | null = null;
 let videosFile: GithubFile | null = null;
+let blessingsFile: GithubFile | null = null;
 
 const PAGE_SIZE = 10;
 let currentListPage = 0;
@@ -167,6 +176,7 @@ const tabBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab-bt
 const tabPanels = Array.from(document.querySelectorAll<HTMLElement>('.tab-panel'));
 const photosList = $('photos-list');
 const videosList = $('videos-list');
+const blessingsList = $('blessings-list');
 const bucketLinks = $('bucket-links');
 const listEditor = $('list-editor');
 const addItemBtn = $<HTMLButtonElement>('add-item-btn');
@@ -262,11 +272,12 @@ patInput.addEventListener('keydown', (e) => {
 
 // ───── Load all data ─────
 async function loadAll() {
-  await Promise.all([loadGallery(), loadList(), loadVideosData()]);
+  await Promise.all([loadGallery(), loadList(), loadVideosData(), loadBlessingsData()]);
   renderPhotos();
   renderVideos();
   renderBucketLinks();
   renderListEditor();
+  renderBlessings();
 }
 
 async function loadGallery() {
@@ -288,6 +299,13 @@ async function loadVideosData() {
   if (!file) throw new Error('Could not read data/videos.env');
   videosFile = file;
   videos = parseVideos(file.content);
+}
+
+async function loadBlessingsData() {
+  const file = await getFile('data/blessings.env', pat);
+  if (!file) throw new Error('Could not read data/blessings.env');
+  blessingsFile = file;
+  blessings = parseBlessings(file.content);
 }
 
 // ───── Render photos ─────
@@ -486,6 +504,92 @@ async function commitVideos() {
   const sha = fresh ? fresh.sha : videosFile.sha;
   await putFile('data/videos.env', content, sha, 'videos: update metadata', pat);
   videosFile = { path: 'data/videos.env', content, sha: '' };
+}
+
+// ───── Blessings ─────
+function renderBlessings() {
+  blessingsList.innerHTML = '';
+  if (blessings.length === 0) {
+    blessingsList.innerHTML = '<p class="status">No blessings yet. Visitor submissions appear here once approved via the GitHub Issue link.</p>';
+    return;
+  }
+  // Show newest first, like the public wall.
+  const sorted = [...blessings].sort((a, b) => b.id - a.id);
+  for (const b of sorted) {
+    const row = document.createElement('div');
+    row.className = 'blessing-row';
+    row.dataset.num = b.num;
+    row.innerHTML = `
+      <div class="blessing-fields">
+        <div class="row">
+          <label>ID <input type="text" class="b-num" value="${escapeAttr(b.num)}" readonly /></label>
+          <label>Date <input type="date" class="b-date" value="${escapeAttr(b.date)}" /></label>
+        </div>
+        <label>Name <input type="text" class="b-name" value="${escapeAttr(b.name)}" maxlength="40" /></label>
+        <label class="grow">Message
+          <textarea class="b-msg" rows="3" maxlength="300">${escapeHtml(b.message)}</textarea>
+        </label>
+      </div>
+      <div class="row actions">
+        <button class="btn btn-primary b-save">Save</button>
+        <button class="btn btn-danger b-delete">Delete</button>
+        <span class="status b-status"></span>
+      </div>
+    `;
+    blessingsList.appendChild(row);
+    row.querySelector('.b-save')!.addEventListener('click', () => saveBlessingRow(b.num));
+    row.querySelector('.b-delete')!.addEventListener('click', () => deleteBlessingRow(b.num));
+  }
+}
+
+async function saveBlessingRow(num: string) {
+  const row = blessingsList.querySelector<HTMLElement>(`.blessing-row[data-num="${num}"]`)!;
+  const date = row.querySelector<HTMLInputElement>('.b-date')!.value;
+  const name = row.querySelector<HTMLInputElement>('.b-name')!.value.trim();
+  const message = row.querySelector<HTMLTextAreaElement>('.b-msg')!.value.trim();
+  const status = row.querySelector<HTMLElement>('.b-status')!;
+  const b = blessings.find((x) => x.num === num);
+  if (!b) return;
+  b.date = date;
+  b.name = name;
+  b.message = message;
+  status.textContent = 'Saving…';
+  status.className = 'status';
+  try {
+    await commitBlessings();
+    status.textContent = '✓ Saved';
+    status.className = 'status status-ok';
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+async function deleteBlessingRow(num: string) {
+  const b = blessings.find((x) => x.num === num);
+  if (!b) return;
+  if (!confirm(`Delete blessing ${num} from ${b.name || 'anonymous'}? This removes it from the public wall.`)) return;
+  const status = blessingsList.querySelector<HTMLElement>(`.blessing-row[data-num="${num}"] .b-status`)!;
+  status.textContent = 'Deleting…';
+  status.className = 'status';
+  try {
+    blessings = blessings.filter((x) => x.num !== num);
+    await commitBlessings();
+    status.textContent = '✓ Deleted';
+    renderBlessings();
+  } catch (e) {
+    status.textContent = `✗ ${String(e)}`;
+    status.className = 'status status-error';
+  }
+}
+
+async function commitBlessings() {
+  if (!blessingsFile) return;
+  const content = serialiseBlessings(blessings, extractHeader(blessingsFile.content));
+  const fresh = await getFile('data/blessings.env', pat);
+  const sha = fresh ? fresh.sha : blessingsFile.sha;
+  await putFile('data/blessings.env', content, sha, 'blessings: update', pat);
+  blessingsFile = { path: 'data/blessings.env', content, sha: '' };
 }
 
 function buildGroups(): { key: string; label: string; clips: VideoItem[] }[] {
@@ -1595,6 +1699,37 @@ tryAutoReconnect();
     color: var(--color-text);
     background: white;
     min-width: 0;
+  }
+
+  /* Blessings list */
+  .blessings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .blessing-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: white;
+    border: 1px solid rgba(47, 80, 97, 0.15);
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+  .blessing-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.4rem 1rem;
+  }
+  .blessing-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85em;
+  }
+  .blessing-fields textarea.b-msg {
+    font-family: var(--font-form);
   }
 
   @media (max-width: 768px) {
