@@ -4,6 +4,21 @@ User-facing changes. Newest entries at top. Format: `## YYYY-MM-DD — summary`.
 
 ---
 
+## 2026-09-08 (late) — Launch prep: noindex settings, asset cleanup
+
+### Changed
+
+- **`/settings/` is now `noindex, nofollow`** — the owner-only page won't
+  be indexed by search engines. All public pages keep `index, follow`.
+
+### Removed
+
+- Legacy unused assets: old number-glyph SVGs, base checkbox SVGs,
+  divider SVG, superseded hero PNGs, and the convert-gallery script.
+  No effect on the live site (none were referenced).
+
+---
+
 ## 2026-09-08 — Blessing wall live end-to-end; form validation; photo/video badge icons
 
 ### Added
