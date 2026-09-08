@@ -339,21 +339,42 @@ async function savePhoto(num: string) {
   const newUrl = row.querySelector<HTMLInputElement>('.p-url')!.value;
   const status = row.querySelector<HTMLElement>('.p-status')!;
 
-  const item = gallery.find((g) => g.num === num);
-  if (!item) return;
-  item.date = newDate;
-  item.location = newLoc;
-  item.caption = newCap;
-  item.url = newUrl;
-
   status.textContent = 'Saving…';
   status.className = 'status';
   try {
-    const content = serialiseGallery(gallery, galleryFile ? extractHeader(galleryFile.content) : '');
+    // Re-fetch the live file BEFORE writing. gallery.env changes frequently
+    // (photo uploads from other tabs / parallel sessions / this page's own
+    // add-photo flow), so the cached sha from page load goes stale fast.
+    // Writing with a stale sha → GitHub 409 "does not match". We also merge
+    // any rows the server has that we don't know about, so we never
+    // accidentally clobber a parallel addition.
+    const live = await getFile('data/gallery.env', pat);
+    if (!live) throw new Error('Could not re-read data/gallery.env');
+    const serverRows = parseGallery(live.content);
+
+    // Merge: start from the server's rows, overlay our in-memory edits
+    // (which include this metadata edit and any unsaved local changes).
+    const merged = serverRows.map((s) => {
+      const local = gallery.find((g) => g.num === s.num);
+      return local ?? s;
+    });
+    // Local-only additions (shouldn't happen here, but keep them safe).
+    for (const g of gallery) {
+      if (!merged.some((m) => m.num === g.num)) merged.push(g);
+    }
+    gallery = merged;
+    const item = gallery.find((g) => g.num === num);
+    if (!item) return;
+    item.date = newDate;
+    item.location = newLoc;
+    item.caption = newCap;
+    item.url = newUrl;
+
+    const content = serialiseGallery(gallery, extractHeader(live.content));
     const newSha = await putFile(
       'data/gallery.env',
       content,
-      galleryFile!.sha,
+      live.sha,
       `gallery: update metadata for photo ${num}`,
       pat,
     );
