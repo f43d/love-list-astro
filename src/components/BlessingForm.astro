@@ -36,11 +36,11 @@ const subject = 'New blessing for buc.ketli.st';
   />
 
   <p class="blessing-form__intro">
-    你的心意，我們收到 ❤️
+    您的心意，我們收到 ❤️
   </p>
 
   <label class="blessing-form__field">
-    <span class="blessing-form__label">你的名字</span>
+    <span class="blessing-form__label">您的名字</span>
     <input
       type="text"
       name="name"
@@ -157,13 +157,13 @@ const subject = 'New blessing for buc.ketli.st';
     ok = showErr(emailErr, '') && ok;
     ok = showErr(msgErr, '') && ok;
 
-    if (!name) { showErr(nameErr, '請填上你的名字。'); ok = false; }
+    if (!name) { showErr(nameErr, '請填上您的名字。'); ok = false; }
     else if (!NAME_RE.test(name)) { showErr(nameErr, '名字只可用中英文文字和空格，不可用數字或符號。'); ok = false; }
 
-    if (!email) { showErr(emailErr, '請填上你的電郵。'); ok = false; }
+    if (!email) { showErr(emailErr, '請填上您的電郵。'); ok = false; }
     else if (!EMAIL_RE.test(email)) { showErr(emailErr, '電郵格式似乎不正確。'); ok = false; }
 
-    if (!message) { showErr(msgErr, '請寫下你的祝福。'); ok = false; }
+    if (!message) { showErr(msgErr, '請寫下您的祝福。'); ok = false; }
     else if (message.length > 300) { showErr(msgErr, '祝福最多 300 字。'); ok = false; }
 
     if (!ok) return;
@@ -182,7 +182,7 @@ const subject = 'New blessing for buc.ketli.st';
       const json = await res.json();
 
       if (res.ok && json.success) {
-        status.textContent = '收到你的心意了！我們會細心讀過，再放上祝福牆。多謝你 💌';
+        status.textContent = '收到您的心意了！我們會細心閱讀過，再放上祝福牆和大家分享。多謝您 💌';
         form.reset();
         updateCount();
       } else {
