@@ -109,6 +109,12 @@ const items: GalleryItem[] = (Astro.props as Props).items ?? loadGallerySorted()
 
     let current = 0;
 
+    // Set when the dialog was auto-opened from a URL deep-link on page
+    // load (e.g. the photo icon on the bucket list). Closing it should
+    // then send the visitor back to the page they came from instead of
+    // stranding them on the gallery grid.
+    let openedFromDeepLink = false;
+
     function render(idx: number): void {
       if (!items.length) return;
       current = ((idx % items.length) + items.length) % items.length;
@@ -121,12 +127,26 @@ const items: GalleryItem[] = (Astro.props as Props).items ?? loadGallerySorted()
 
     function open(idx: number): void {
       render(idx);
-      dialog!.showModal();
+      // showModal() throws if the dialog is already open (e.g. a second
+      // hashchange while the lightbox is up) — render() above already
+      // updated the image, so just skip re-opening.
+      if (!dialog!.open) dialog!.showModal();
     }
 
     function close(): void {
       dialog!.close();
-      history.replaceState(null, '', ' ');
+      if (openedFromDeepLink) {
+        openedFromDeepLink = false;
+        if (window.history.length > 1) {
+          history.back();
+        } else {
+          // No history to go back to (e.g. opened in a new tab) — land
+          // on the homepage instead of the gallery grid.
+          window.location.href = '/';
+        }
+        return;
+      }
+      history.replaceState(null, '', window.location.pathname);
     }
 
     document.querySelectorAll<HTMLButtonElement>('.gallery__thumb').forEach((btn, idx) => {
@@ -162,7 +182,10 @@ const items: GalleryItem[] = (Astro.props as Props).items ?? loadGallerySorted()
     const hash = window.location.hash.replace('#', '');
     if (hash) {
       const idx = items.findIndex((it) => it.num === hash);
-      if (idx >= 0) open(idx);
+      if (idx >= 0) {
+        openedFromDeepLink = true;
+        open(idx);
+      }
     }
 
     // React to hashchange (e.g. user clicks another bucket-list link).
